@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { BulkSmsModule } from './bulk-sms/bulk-sms.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { AppService } from './app.service';
     AdminModule,
     ServicesModule,
     ContactUsModule,
-    NewsletterModule
+    NewsletterModule,
+    BulkSmsModule
   ],
   controllers: [AppController],
   providers: [AppService]

@@ -171,6 +171,61 @@ model NewsletterTemplate {
   @@map("newsletter_templates")
 }
 
+// ==========================
+// Bulk SMS Models
+// ==========================
+
+model SmsWallet {
+  id              String @id @default(cuid())
+  totalBalance    Float?
+  universalWallet Float?
+  smsWallet       Float?
+  smsBonus        Float?
+  mainBalance     Float?
+  volumeBonus     Float?
+  promoBonus      Float?
+
+  balanceBefore   Float?
+  balanceAfter    Float?
+  lastAmountSpent Float? @default(0)
+
+  provider  String   @default("bulksmsnigeria")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sms_wallets")
+}
+
+model Sms {
+  id                String   @id @default(cuid())
+  from              String
+  to                String[] // store recipients as array; sent to provider as CSV
+  body              String
+  gateway           String?
+  platform          String   @default("bulksmsnigeria")
+  appendSender      String?
+  callbackUrl       String?
+  customerReference String?
+
+  status            SmsStatus @default(pending)
+  providerMessageId String?
+  cost              Float?
+  currency          String?
+  responseRaw       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerReference])
+  @@map("sms")
+}
+
+enum SmsStatus {
+  pending
+  sent
+  failed
+}
+
 enum Role {
   user
   admin
