@@ -42,19 +42,45 @@ export class BulkSmsService {
       if (response.status >= 200 && response.status < 300) {
         const payload = response.data;
 
-        // Persist wallet snapshot
+        // Upsert provider-synced admin wallet snapshot
         const balance = payload?.balance || {};
-        await this.prisma.smsWallet.create({
-          data: {
-            totalBalance: Number(balance.total_balance) || undefined,
-            universalWallet: Number(balance.universal_wallet) || undefined,
-            smsWallet: Number(balance.sms_wallet) || undefined,
-            smsBonus: Number(balance.sms_bonus) || undefined,
-            mainBalance: Number(balance.main_balance) || undefined,
-            volumeBonus: Number(balance.volume_bonus) || undefined,
-            promoBonus: Number(balance.promo_bonus) || undefined,
-          },
+        const numeric = (v: any) => {
+          const n = Number(v);
+          return isNaN(n) ? null : n;
+        };
+
+        const existing = await this.prisma.smsWallet.findFirst({
+          where: { kind: 'provider_synced', provider: 'bulksmsnigeria' },
         });
+
+        if (existing) {
+          await this.prisma.smsWallet.update({
+            where: { id: existing.id },
+            data: {
+              totalBalance: numeric(balance.total_balance) ?? undefined,
+              universalWallet: numeric(balance.universal_wallet) ?? undefined,
+              smsWallet: numeric(balance.sms_wallet) ?? undefined,
+              smsBonus: numeric(balance.sms_bonus) ?? undefined,
+              mainBalance: numeric(balance.main_balance) ?? undefined,
+              volumeBonus: numeric(balance.volume_bonus) ?? undefined,
+              promoBonus: numeric(balance.promo_bonus) ?? undefined,
+            },
+          });
+        } else {
+          await this.prisma.smsWallet.create({
+            data: {
+              kind: 'provider_synced',
+              provider: 'bulksmsnigeria',
+              totalBalance: numeric(balance.total_balance) ?? undefined,
+              universalWallet: numeric(balance.universal_wallet) ?? undefined,
+              smsWallet: numeric(balance.sms_wallet) ?? undefined,
+              smsBonus: numeric(balance.sms_bonus) ?? undefined,
+              mainBalance: numeric(balance.main_balance) ?? undefined,
+              volumeBonus: numeric(balance.volume_bonus) ?? undefined,
+              promoBonus: numeric(balance.promo_bonus) ?? undefined,
+            },
+          });
+        }
 
         return successResponse(
           200,
@@ -148,11 +174,26 @@ export class BulkSmsService {
 
         // Update wallet snapshot with last amount spent if we can fetch balance
         if (!isNaN(cost)) {
-          await this.prisma.smsWallet.create({
-            data: {
-              lastAmountSpent: cost,
-            },
+          const providerWallet = await this.prisma.smsWallet.findFirst({
+            where: { kind: 'provider_synced', provider: 'bulksmsnigeria' },
           });
+          if (providerWallet) {
+            await this.prisma.$transaction([
+              this.prisma.smsWallet.update({
+                where: { id: providerWallet.id },
+                data: { lastAmountSpent: cost },
+              }),
+              this.prisma.smsWalletTransaction.create({
+                data: {
+                  walletId: providerWallet.id,
+                  type: 'debit',
+                  amount: cost,
+                  reference: messageId || smsRecord.id,
+                  meta: { source: 'sms_send' },
+                },
+              }),
+            ]);
+          }
         }
 
         return successResponse(

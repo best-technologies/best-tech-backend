@@ -34,6 +34,7 @@ model User {
   staffProfile         Staff?
   studentProfile       Student?
   Service              Service[]
+  smsWallets           SmsWallet[]
 
   @@map("users")
 }
@@ -176,7 +177,13 @@ model NewsletterTemplate {
 // ==========================
 
 model SmsWallet {
-  id              String @id @default(cuid())
+  id       String     @id @default(cuid())
+  kind     WalletKind @default(provider_synced)
+  provider String?    @default("bulksmsnigeria")
+  userId   String?
+  user     User?      @relation(fields: [userId], references: [id])
+
+  // Provider snapshot fields (admin wallet)
   totalBalance    Float?
   universalWallet Float?
   smsWallet       Float?
@@ -185,13 +192,17 @@ model SmsWallet {
   volumeBonus     Float?
   promoBonus      Float?
 
+  // Local user wallet balance
+  currentBalance Float? @default(0)
+
+  // Derived/aux
   balanceBefore   Float?
   balanceAfter    Float?
   lastAmountSpent Float? @default(0)
 
-  provider  String   @default("bulksmsnigeria")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  transactions SmsWalletTransaction[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
 
   @@map("sms_wallets")
 }
@@ -218,6 +229,49 @@ model Sms {
 
   @@unique([customerReference])
   @@map("sms")
+}
+
+model SmsWalletTransaction {
+  id        String          @id @default(cuid())
+  walletId  String
+  wallet    SmsWallet       @relation(fields: [walletId], references: [id])
+  type      TransactionType
+  amount    Float
+  reference String?
+  meta      Json?
+  createdAt DateTime        @default(now())
+
+  @@map("sms_wallet_transactions")
+}
+
+enum WalletKind {
+  provider_synced
+  user
+}
+
+enum TransactionType {
+  credit
+  debit
+}
+
+// ==========================
+// SMS Pricing Tiers
+// ==========================
+
+model SmsCostTier {
+  id          String  @id @default(cuid())
+  name        String
+  minUnits    Int // inclusive
+  maxUnits    Int? // inclusive; null means no upper bound
+  pricePerSms Float
+  gateway     String? // optional: tie tier to a gateway
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([minUnits, maxUnits, gateway])
+  @@map("sms_cost_tiers")
 }
 
 enum SmsStatus {
