@@ -35,6 +35,7 @@ model User {
   studentProfile       Student?
   Service              Service[]
   smsWallets           SmsWallet[]
+  emailWallets         EmailWallet[]
 
   @@map("users")
 }
@@ -359,4 +360,111 @@ enum NewsletterStatus {
   scheduled
   sent
   cancelled
+}
+
+// ==========================
+// Bulk Email Models
+// ==========================
+
+model EmailWallet {
+  id       String     @id @default(cuid())
+  kind     WalletKind @default(provider_synced)
+  provider String?    @default("gmail_smtp")
+  userId   String?
+  user     User?      @relation(fields: [userId], references: [id])
+
+  // Provider snapshot fields (admin wallet)
+  totalBalance Float?
+  emailWallet  Float?
+  emailBonus   Float?
+  mainBalance  Float?
+  volumeBonus  Float?
+  promoBonus   Float?
+
+  // Local user wallet balance
+  currentBalance Float? @default(0)
+
+  // Derived/aux
+  balanceBefore   Float?
+  balanceAfter    Float?
+  lastAmountSpent Float? @default(0)
+
+  transactions EmailWalletTransaction[]
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  @@map("email_wallets")
+}
+
+model Email {
+  id                String   @id @default(cuid())
+  from              String
+  fromName          String?
+  to                String[] // store recipients as array
+  cc                String[] // CC recipients
+  bcc               String[] // BCC recipients
+  subject           String
+  body              String
+  contentType       String   @default("text/html")
+  attachments       Json? // Array of attachment objects
+  replyTo           String?
+  priority          String   @default("normal")
+  platform          String   @default("gmail_smtp")
+  callbackUrl       String?
+  customerReference String?
+
+  status            EmailStatus @default(pending)
+  providerMessageId String?
+  cost              Float?
+  currency          String?
+  responseRaw       Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([customerReference])
+  @@map("emails")
+}
+
+model EmailWalletTransaction {
+  id        String          @id @default(cuid())
+  walletId  String
+  wallet    EmailWallet     @relation(fields: [walletId], references: [id])
+  type      TransactionType
+  amount    Float
+  reference String?
+  meta      Json?
+  createdAt DateTime        @default(now())
+
+  @@map("email_wallet_transactions")
+}
+
+// ==========================
+// Email Pricing Tiers
+// ==========================
+
+model EmailCostTier {
+  id            String  @id @default(cuid())
+  name          String
+  minEmails     Int // inclusive
+  maxEmails     Int? // inclusive; null means no upper bound
+  pricePerEmail Float
+  provider      String? // optional: tie tier to a provider
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([minEmails, maxEmails, provider])
+  @@map("email_cost_tiers")
+}
+
+enum EmailStatus {
+  pending
+  sent
+  failed
+  bounced
+  delivered
+  opened
+  clicked
 }

@@ -138,8 +138,8 @@ export class IdentityService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      createdAt: formatDate(user.createdAt),
-      updatedAt: formatDate(user.updatedAt),
+      createdAt: (user.createdAt),
+      updatedAt: (user.updatedAt),
     }
 
     console.log(colors.magenta('User signed in successfully'));

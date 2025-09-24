@@ -14,6 +14,7 @@ import { LoggerModule } from './common/logger/logger.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { BulkSmsModule } from './bulk-sms/bulk-sms.module';
+import { BulkEmailModule } from './bulk-email/bulk-email.module';
 
 @Module({
   imports: [
@@ -30,7 +31,8 @@ import { BulkSmsModule } from './bulk-sms/bulk-sms.module';
     ServicesModule,
     ContactUsModule,
     NewsletterModule,
-    BulkSmsModule
+    BulkSmsModule,
+    BulkEmailModule
   ],
   controllers: [AppController],
   providers: [AppService]
