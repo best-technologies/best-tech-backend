@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { successResponse, failureResponse } from '../utils/response';
 import { LoggerService } from '../common/logger/logger.service';
+import { BulkSmsService } from '../bulk-sms/bulk-sms.service';
+import { ConfigService } from '@nestjs/config';
 // import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -10,6 +12,8 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private logger: LoggerService,
+    private configService: ConfigService,
+    private bulkSmsService: BulkSmsService,
   ) {}
 
   async getUserDashboard(userId: string) {
@@ -48,6 +52,7 @@ export class UsersService {
       });
 
       if (!user) {
+        this.logger.error('User not found');
         return failureResponse(404, 'User not found');
       }
 
@@ -136,6 +141,19 @@ export class UsersService {
         }
       });
 
+      // Get admin-specific data
+      let adminSmsWallet = null;
+      if (user.role === 'admin') {
+        try {
+          const bulksmsWallet = await this.bulkSmsService.getWalletBalance();
+          if (bulksmsWallet.success) {
+            adminSmsWallet = bulksmsWallet.data;
+          }
+        } catch (error) {
+          this.logger.error('Failed to fetch admin SMS wallet balance', error, 'UsersService');
+        }
+      }
+
       // Get contact us submissions (if user is admin/staff)
       let contactStats: { totalSubmissions: number } | null = null;
       if (user.role === 'admin' || user.role === 'staff') {
@@ -164,7 +182,8 @@ export class UsersService {
             totalSent: smsStats._count.id || 0,
             totalCost: smsStats._sum.cost || 0,
             walletBalance: smsWallet?.currentBalance || 0,
-            lastSpent: smsWallet?.lastAmountSpent || 0
+            lastSpent: smsWallet?.lastAmountSpent || 0,
+            adminWallet: adminSmsWallet
           },
           email: {
             totalSent: emailStats._count.id || 0,
@@ -180,8 +199,13 @@ export class UsersService {
         recentActivity: {
           sms: recentSms,
           emails: recentEmails
-        }
+        },
+        adminData: user.role === 'admin' ? {
+          smsWallet: adminSmsWallet
+        } : null
       };
+
+      this.logger.log('User dashboard retrieved successfully');
 
       return successResponse(
         200,
