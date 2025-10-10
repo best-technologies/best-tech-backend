@@ -1,13 +1,16 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { BulkEmailService } from './bulk-email.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { EmailTierService } from './email-tier.service';
 import { CreateEmailTierDto } from './dto/create-email-tier.dto';
 import { UpdateEmailTierDto } from './dto/update-email-tier.dto';
+import { JwtAuthGuard } from '../identity/guards/jwt-auth.guard';
 
 @ApiTags('Bulk Email')
 @Controller('bulk-email')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class BulkEmailController {
   constructor(
     private readonly bulkEmailService: BulkEmailService,
@@ -22,8 +25,8 @@ export class BulkEmailController {
 
   @Post('send-email')
   @ApiOperation({ summary: 'Send bulk email' })
-  async sendEmail(@Body() dto: SendEmailDto) {
-    return this.bulkEmailService.sendEmail(dto);
+  async sendEmail(@Body() dto: SendEmailDto, @Request() req: any) {
+    return this.bulkEmailService.sendEmail(dto, req.user.userId);
   }
 
   @Get('history')

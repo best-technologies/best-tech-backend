@@ -78,7 +78,7 @@ export class BulkEmailService {
     }
   }
 
-  async sendEmail(dto: SendEmailDto) {
+  async sendEmail(dto: SendEmailDto, userId?: string) {
     this.logger.log('Sending bulk email...', 'BulkEmail');
 
     const emailUser = this.configService.get<string>('EMAIL_USER');
@@ -122,6 +122,7 @@ export class BulkEmailService {
           callbackUrl: dto.callbackUrl,
           customerReference,
           status: 'pending',
+          userId: userId || null,
         },
       });
 

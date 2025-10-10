@@ -26,6 +26,8 @@ export class UsersService {
         return failureResponse(400, 'User ID is required');
       }
 
+      this.logger.log('User ID: ' + userId, 'UsersService');
+
       // Get user basic info
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
@@ -56,11 +58,12 @@ export class UsersService {
         return failureResponse(404, 'User not found');
       }
 
+      // Filter criteria: admins see all, regular users see only their own
+      const userFilter = user.role === 'admin' ? {} : { userId: userId };
+
       // Get SMS statistics
       const smsStats = await this.prisma.sms.aggregate({
-        where: { 
-          // Assuming we track user-specific SMS, adjust based on your schema
-        },
+        where: userFilter,
         _count: {
           id: true
         },
@@ -71,9 +74,7 @@ export class UsersService {
 
       // Get email statistics
       const emailStats = await this.prisma.email.aggregate({
-        where: {
-          // Assuming we track user-specific emails, adjust based on your schema
-        },
+        where: userFilter,
         _count: {
           id: true
         },
@@ -84,9 +85,7 @@ export class UsersService {
 
       // Get recent SMS activity
       const recentSms = await this.prisma.sms.findMany({
-        where: {
-          // Add user-specific filtering if needed
-        },
+        where: userFilter,
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: {
@@ -101,9 +100,7 @@ export class UsersService {
 
       // Get recent email activity
       const recentEmails = await this.prisma.email.findMany({
-        where: {
-          // Add user-specific filtering if needed
-        },
+        where: userFilter,
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: {
@@ -120,6 +117,14 @@ export class UsersService {
       const smsWallet = await this.prisma.smsWallet.findFirst({
         where: { userId: userId },
         select: {
+          totalBalance: true,
+          universalWallet: true,
+          smsWallet: true,
+          balanceBefore: true,
+          smsBonus: true,
+          mainBalance: true,
+          volumeBonus: true,
+          promoBonus: true,
           currentBalance: true,
           lastAmountSpent: true
         }
@@ -128,6 +133,12 @@ export class UsersService {
       const emailWallet = await this.prisma.emailWallet.findFirst({
         where: { userId: userId },
         select: {
+          totalBalance: true,
+          emailWallet: true,
+          emailBonus: true,
+          mainBalance: true,
+          volumeBonus: true,
+          promoBonus: true,
           currentBalance: true,
           lastAmountSpent: true
         }
@@ -144,8 +155,10 @@ export class UsersService {
       // Get admin-specific data
       let adminSmsWallet = null;
       if (user.role === 'admin') {
+        this.logger.log('Fetching admin SMS wallet balance', 'UsersService');
         try {
           const bulksmsWallet = await this.bulkSmsService.getWalletBalance();
+          this.logger.log('Admin SMS wallet balance fetched', bulksmsWallet);
           if (bulksmsWallet.success) {
             adminSmsWallet = bulksmsWallet.data;
           }
@@ -181,8 +194,8 @@ export class UsersService {
           sms: {
             totalSent: smsStats._count.id || 0,
             totalCost: smsStats._sum.cost || 0,
-            walletBalance: smsWallet?.currentBalance || 0,
-            lastSpent: smsWallet?.lastAmountSpent || 0,
+            walletBalance: smsWallet?.totalBalance || 0,
+            lastSpent: smsWallet?.balanceBefore || 0,
             adminWallet: adminSmsWallet
           },
           email: {

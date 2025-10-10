@@ -30,9 +30,7 @@ export class BulkSmsService {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
-        },
-        data: {
-          api_token: token,
+          Authorization: `Bearer ${token}`,
         },
         timeout: 15000,
         maxRedirects: 10,
@@ -101,7 +99,7 @@ export class BulkSmsService {
     }
   }
 
-  async sendSms(dto: SendSmsDto) {
+  async sendSms(dto: SendSmsDto, userId?: string) {
     this.logger.log('Sending BulkSMS message...', 'BulkSMS');
 
     const token = this.configService.get<string>('BULKSMSTOKEN');
@@ -126,6 +124,7 @@ export class BulkSmsService {
           callbackUrl: dto.callback_url,
           customerReference,
           status: 'pending',
+          userId: userId || null,
         },
       });
 
@@ -135,9 +134,9 @@ export class BulkSmsService {
         headers: {
           Accept: 'application/json',
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         data: {
-          api_token: token,
           from: dto.from,
           to: dto.to,
           body: dto.body,
@@ -151,7 +150,10 @@ export class BulkSmsService {
         validateStatus: () => true,
       });
 
+      this.logger.log('Response from BulkSMS', response.data);
+
       if (response.status >= 200 && response.status < 300) {
+        this.logger.log('Message sent successfully', 'BulkSMS');
         const payload = response.data;
 
         // Extract cost, currency, message_id if present
@@ -196,6 +198,7 @@ export class BulkSmsService {
           }
         }
 
+        this.logger.log('Message sent successfully', 'BulkSMS');
         return successResponse(
           200,
           true,

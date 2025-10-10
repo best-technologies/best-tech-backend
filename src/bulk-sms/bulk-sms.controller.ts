@@ -1,13 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { BulkSmsService } from './bulk-sms.service';
 import { SendSmsDto } from './dto/send-sms.dto';
 import { SmsTierService } from './sms-tier-service';
 import { CreateSmsTierDto } from './dto/create-sms-tier.dto';
 import { UpdateSmsTierDto } from './dto/update-sms-tier.dto';
+import { JwtAuthGuard } from '../identity/guards/jwt-auth.guard';
 
 @ApiTags('Bulk SMS')
 @Controller('bulk-sms')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class BulkSmsController {
   constructor(
     private readonly bulkSmsService: BulkSmsService,
@@ -20,8 +23,8 @@ export class BulkSmsController {
   }
 
   @Post('send-sms')
-  async sendSms(@Body() dto: SendSmsDto) {
-    return this.bulkSmsService.sendSms(dto);
+  async sendSms(@Body() dto: SendSmsDto, @Request() req: any) {
+    return this.bulkSmsService.sendSms(dto, req.user.userId);
   }
 
   // Tiers

@@ -36,6 +36,8 @@ model User {
   Service              Service[]
   smsWallets           SmsWallet[]
   emailWallets         EmailWallet[]
+  sms                  Sms[]                @relation("UserSms")
+  emails               Email[]              @relation("UserEmails")
 
   @@map("users")
 }
@@ -224,6 +226,9 @@ model Sms {
   cost              Float?
   currency          String?
   responseRaw       Json?
+
+  userId String?
+  user   User?   @relation("UserSms", fields: [userId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -418,6 +423,9 @@ model Email {
   cost              Float?
   currency          String?
   responseRaw       Json?
+
+  userId String?
+  user   User?   @relation("UserEmails", fields: [userId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

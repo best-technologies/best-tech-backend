@@ -57,6 +57,34 @@ export class IdentityService {
         }
       });
 
+      // Create wallets for the new user
+      try {
+        await this.prisma.$transaction([
+          this.prisma.smsWallet.create({
+            data: {
+              kind: 'user',
+              provider: 'bulksmsnigeria',
+              userId: newUser.id,
+              currentBalance: 0,
+              lastAmountSpent: 0,
+            }
+          }),
+          this.prisma.emailWallet.create({
+            data: {
+              kind: 'user',
+              provider: 'gmail_smtp',
+              userId: newUser.id,
+              currentBalance: 0,
+              lastAmountSpent: 0,
+            }
+          })
+        ]);
+        console.log(colors.green('User wallets created successfully'));
+      } catch (walletError) {
+        console.error(colors.red('Error creating user wallets:'), walletError);
+        // Don't fail user creation if wallet creation fails
+      }
+
       // Send welcome email to the new user
       try {
         console.log(colors.blue(`Sending welcome email to ${email}`));
@@ -100,6 +128,9 @@ export class IdentityService {
 
   async signIn(dto: SignInDto): Promise<Tokens> {
     console.log(colors.green('Signing in user...'));
+    console.log('🔍 [SIGNIN SERVICE] Email received:', dto.email);
+    console.log('🔍 [SIGNIN SERVICE] Password received (length):', dto.password?.length);
+    console.log('🔍 [SIGNIN SERVICE] Password received (first 3 chars):', dto.password?.substring(0, 3));
 
     // Find user by email
     const user = await this.prisma.user.findUnique({
@@ -111,11 +142,18 @@ export class IdentityService {
       return failureResponse(404, 'User not found', false);
     }
 
+    console.log('🔍 [SIGNIN SERVICE] User found:', user.email);
+    console.log('🔍 [SIGNIN SERVICE] Stored password hash (first 20 chars):', user.password?.substring(0, 20));
+
     // Compare passwords
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     
+    console.log('🔍 [SIGNIN SERVICE] Password comparison result:', isPasswordValid);
+    
     if (!isPasswordValid) {
       console.log(colors.red('Invalid credentials'));
+      console.log('🔍 [SIGNIN SERVICE] Password received:', dto.password);
+      console.log('🔍 [SIGNIN SERVICE] Hash in DB:', user.password);
       return failureResponse(401, 'Invalid credentials', false);
     }
 

@@ -93,6 +93,10 @@ export class IdentityController {
   @Post('signin')
   @HttpCode(HttpStatus.OK)
   async signIn(@Body() dto: SignInDto, @Res() res: Response) {
+    console.log('🔍 [SIGNIN CONTROLLER] Received payload:', JSON.stringify(dto, null, 2));
+    console.log('🔍 [SIGNIN CONTROLLER] Email:', dto.email);
+    console.log('🔍 [SIGNIN CONTROLLER] Password length:', dto.password?.length);
+    console.log('🔍 [SIGNIN CONTROLLER] Password type:', typeof dto.password);
     const result = await this.identityService.signIn(dto);
     return res.status(Number(result.statusCode)).json(result);
   }
