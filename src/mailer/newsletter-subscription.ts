@@ -1,5 +1,5 @@
 export const newsletterSubscriptionAdminTemplate = (
-  subscriberEmail: string, 
+  subscriberEmail: string,
   subscriptionId: string,
   stats: {
     totalSubscribers: number;
@@ -8,7 +8,7 @@ export const newsletterSubscriptionAdminTemplate = (
     thisWeekSubscribers: number;
     averageSubscribersPerMonth: number;
     topSubscriberDomains: string[];
-  }
+  },
 ): string => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -17,7 +17,7 @@ export const newsletterSubscriptionAdminTemplate = (
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).format(date);
   };
 
@@ -431,7 +431,7 @@ export const newsletterWelcomeTemplate = (email: string): string => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).format(date);
   };
 
@@ -822,4 +822,4 @@ export const newsletterWelcomeTemplate = (email: string): string => {
     </div>
 </body>
 </html>`;
-}; 
+};

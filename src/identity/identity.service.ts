@@ -1,8 +1,8 @@
-import { 
-  Injectable, 
+import {
+  Injectable,
   ConflictException,
-  UnauthorizedException, 
-  InternalServerErrorException
+  UnauthorizedException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,7 +11,6 @@ import * as bcrypt from 'bcrypt';
 
 import { CreateUserDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
-import { Tokens } from './interfaces/tokens.interface';
 import { AuthPayload } from './interfaces/auth-payload.interface';
 import * as colors from 'colors';
 import { failureResponse, successResponse } from 'src/utils/response';
@@ -29,44 +28,43 @@ export class IdentityService {
   /////////////////////////                           Create a new user å/*  */
   /////////////////////////                           Create a new user å/*  */
   async createUser(signUpDto: CreateUserDto): Promise<any> {
-
     console.log(colors.green('Creating new User...'));
 
     try {
       const { email, password, firstName, lastName } = signUpDto;
-  
+
       // Check if user already exists
       const existingUser = await this.prisma.user.findUnique({
-        where: { email }
+        where: { email },
       });
       if (existingUser) {
         console.log(colors.red('User with supplied email already exists'));
-        return failureResponse(409, 'User with supplied email already exists', false);
+        return failureResponse(
+          409,
+          'User with supplied email already exists',
+          false,
+        );
       }
-  
+
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
-  
-            // Create new user
+
+      // Create new user
       const newUser = await this.prisma.user.create({
         data: {
           email,
           password: hashedPassword,
           firstName,
           lastName,
-        }
+        },
       });
 
       // Send welcome email to the new user
       try {
         console.log(colors.blue(`Sending welcome email to ${email}`));
-        
-        await sendWelcomeEmail(
-          email,
-          firstName,
-          lastName
-        );
-        
+
+        await sendWelcomeEmail(email, firstName, lastName);
+
         console.log(colors.green('Welcome email sent successfully'));
       } catch (emailError) {
         console.error(colors.red('Error sending welcome email:'), emailError);
@@ -84,44 +82,61 @@ export class IdentityService {
       };
 
       console.log(colors.magenta('New User successfully created'));
-      return successResponse(201, true, 'New User successfully created', undefined, formattedData);
+      return successResponse(
+        201,
+        true,
+        'New User successfully created',
+        undefined,
+        formattedData,
+      );
     } catch (error) {
       if (error instanceof ConflictException) {
         throw error;
       }
-  
+
       console.error(colors.red('Error in createNewUser:'), error);
-  
+
       // You can throw a more specific exception depending on the nature of the error
       throw new InternalServerErrorException('Failed to create new user');
     }
   }
-  
 
-  async signIn(dto: SignInDto): Promise<Tokens> {
+  async signIn(dto: SignInDto): Promise<any> {
     console.log(colors.green('Signing in user...'));
     console.log('🔍 [SIGNIN SERVICE] Email received:', dto.email);
-    console.log('🔍 [SIGNIN SERVICE] Password received (length):', dto.password?.length);
-    console.log('🔍 [SIGNIN SERVICE] Password received (first 3 chars):', dto.password?.substring(0, 3));
+    console.log(
+      '🔍 [SIGNIN SERVICE] Password received (length):',
+      dto.password?.length,
+    );
+    console.log(
+      '🔍 [SIGNIN SERVICE] Password received (first 3 chars):',
+      dto.password?.substring(0, 3),
+    );
 
     // Find user by email
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email }
+      where: { email: dto.email },
     });
-    
+
     if (!user) {
       console.log(colors.red('User not found'));
       return failureResponse(404, 'User not found', false);
     }
 
     console.log('🔍 [SIGNIN SERVICE] User found:', user.email);
-    console.log('🔍 [SIGNIN SERVICE] Stored password hash (first 20 chars):', user.password?.substring(0, 20));
+    console.log(
+      '🔍 [SIGNIN SERVICE] Stored password hash (first 20 chars):',
+      user.password?.substring(0, 20),
+    );
 
     // Compare passwords
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-    
-    console.log('🔍 [SIGNIN SERVICE] Password comparison result:', isPasswordValid);
-    
+
+    console.log(
+      '🔍 [SIGNIN SERVICE] Password comparison result:',
+      isPasswordValid,
+    );
+
     if (!isPasswordValid) {
       console.log(colors.red('Invalid credentials'));
       console.log('🔍 [SIGNIN SERVICE] Password received:', dto.password);
@@ -138,7 +153,7 @@ export class IdentityService {
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { refreshToken: tokens.refreshToken }
+      data: { refreshToken: tokens.refreshToken },
     });
 
     const formattedUser = {
@@ -148,45 +163,43 @@ export class IdentityService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      createdAt: (user.createdAt),
-      updatedAt: (user.updatedAt),
-    }
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
 
     console.log(colors.magenta('User signed in successfully'));
     return successResponse(
-      200, 
-      true, 
-      'User signed in successfully', 
-      undefined, 
-      formattedUser);
+      200,
+      true,
+      'User signed in successfully',
+      undefined,
+      formattedUser,
+    );
   }
 
-  async signout(userId: string): Promise<void> {
+  async signout(userId: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
-  
+
     if (!user) {
       return failureResponse(404, 'User not found', false);
     }
-  
+
     await this.prisma.user.update({
       where: { id: userId },
-      data: { refreshToken: null }
+      data: { refreshToken: null },
     });
-  
+
     return successResponse(200, true, 'User logged out successfully');
   }
 
-  async refreshTokens(
-    userId: string, 
-    refreshToken: string
-  ): Promise<Tokens> {
+  async refreshTokens(userId: string, refreshToken: string): Promise<any> {
     // Find user by ID
     const user = await this.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
-    
+
     if (!user) {
       throw new UnauthorizedException('Invalid user');
     }
@@ -197,12 +210,20 @@ export class IdentityService {
       role: user.role,
     });
 
-    return successResponse(200, true, 'Tokens refreshed successfully', undefined, {
-      accessToken: tokens.accessToken,
-    });
+    return successResponse(
+      200,
+      true,
+      'Tokens refreshed successfully',
+      undefined,
+      {
+        accessToken: tokens.accessToken,
+      },
+    );
   }
 
-  private async generateTokens(payload: AuthPayload): Promise<{ accessToken: string; refreshToken: string, role: string }> {
+  private async generateTokens(
+    payload: AuthPayload,
+  ): Promise<{ accessToken: string; refreshToken: string; role: string }> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('jwt.accessSecret'),

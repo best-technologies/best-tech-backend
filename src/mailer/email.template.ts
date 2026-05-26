@@ -1,5 +1,9 @@
-export const otpVerificationCodeTemplate = (email: string, otp: string, expiryTime: string): string => {
-    return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+export const otpVerificationCodeTemplate = (
+  email: string,
+  otp: string,
+  expiryTime: string,
+): string => {
+  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
  <head>
   <meta charset="UTF-8">
@@ -177,9 +181,8 @@ a[x-apple-data-detectors],
    </table>
   </div>
  </body>
-</html>`
-}
-
+</html>`;
+};
 
 //  WELCOME EMAIL
 export const welcomeEmail = (firstName) => {
@@ -399,5 +402,5 @@ mso-hide:all;
 </div>
 </body>
 </html>
-  `
-}
+  `;
+};

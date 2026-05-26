@@ -11,8 +11,12 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [PrismaModule, LoggerModule, ConfigModule],
-  controllers: [NewsletterController, NewsletterPublicController, NewsletterTemplateController],
+  controllers: [
+    NewsletterController,
+    NewsletterPublicController,
+    NewsletterTemplateController,
+  ],
   providers: [NewsletterService, NewsletterTemplateService, CloudinaryService],
   exports: [NewsletterService, NewsletterTemplateService],
 })
-export class NewsletterModule {} 
+export class NewsletterModule {}

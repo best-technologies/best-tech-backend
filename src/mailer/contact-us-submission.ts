@@ -1,6 +1,9 @@
 import { CreateContactUsDto } from '../contact-us/dto/create-contact-us.dto';
 
-export const contactUsSubmissionTemplate = (submissionData: CreateContactUsDto, submissionId: string): string => {
+export const contactUsSubmissionTemplate = (
+  submissionData: CreateContactUsDto,
+  submissionId: string,
+): string => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
@@ -8,20 +11,20 @@ export const contactUsSubmissionTemplate = (submissionData: CreateContactUsDto, 
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).format(date);
   };
 
   const formatBudget = (budget: string) => {
-    return budget.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return budget.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatTimeline = (timeline: string) => {
-    return timeline.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return timeline.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   const formatSubject = (subject: string) => {
-    return subject.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return subject.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return `<!DOCTYPE html>
@@ -274,12 +277,16 @@ export const contactUsSubmissionTemplate = (submissionData: CreateContactUsDto, 
                     <div class="detail-value">${submissionData.phoneNumber}</div>
                 </div>
                 
-                ${submissionData.companyName ? `
+                ${
+                  submissionData.companyName
+                    ? `
                 <div class="detail-row">
                     <div class="detail-label">🏢 Company:</div>
                     <div class="detail-value">${submissionData.companyName}</div>
                 </div>
-                ` : ''}
+                `
+                    : ''
+                }
                 
                 <div class="detail-row">
                     <div class="detail-label">📋 Subject:</div>
@@ -320,5 +327,3 @@ export const contactUsSubmissionTemplate = (submissionData: CreateContactUsDto, 
 </body>
 </html>`;
 };
-
-

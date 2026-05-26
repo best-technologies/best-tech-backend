@@ -30,6 +30,6 @@ import { AppService } from './app.service';
     NewsletterModule,
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [AppService],
 })
 export class AppModule {}

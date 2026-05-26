@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class CreateCategoryDto {
   @ApiProperty({
     description: 'Category name',
-    example: 'Web Development'
+    example: 'Web Development',
   })
   @IsNotEmpty()
   @IsString()
@@ -13,7 +13,7 @@ export class CreateCategoryDto {
   @ApiProperty({
     description: 'Category description',
     example: 'Services related to web development',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -23,7 +23,7 @@ export class CreateCategoryDto {
     description: 'Category tags for searching',
     example: ['React', 'Vue', 'JavaScript'],
     required: false,
-    type: [String]
+    type: [String],
   })
   @IsOptional()
   tags?: string[];
@@ -32,7 +32,7 @@ export class CreateCategoryDto {
     description: 'Whether the category is active',
     example: true,
     required: false,
-    default: true
+    default: true,
   })
   @IsOptional()
   isActive?: boolean;

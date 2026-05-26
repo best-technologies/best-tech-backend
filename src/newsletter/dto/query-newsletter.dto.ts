@@ -52,4 +52,4 @@ export class QueryNewsletterDto {
   @IsOptional()
   @IsEnum(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc' = 'desc';
-} 
+}

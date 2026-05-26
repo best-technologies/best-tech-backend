@@ -1,7 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { ContactSubject, ProposedBudget, ProjectTimeline, ContactStatus } from '../../prisma/client';
+import {
+  ContactSubject,
+  ProposedBudget,
+  ProjectTimeline,
+  ContactStatus,
+} from '../../prisma/client';
 
 export class UpdateContactUsDto {
   @ApiProperty({
@@ -97,4 +102,4 @@ export class UpdateContactUsDto {
   @IsEnum(ContactStatus)
   @Transform(({ value }) => value?.toLowerCase())
   status?: ContactStatus;
-} 
+}

@@ -5,18 +5,18 @@ const toTitleCase = (value: string | null | undefined): string => {
   return value
     .split(' ')
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 };
 
 const formatEnum = (value: string | null | undefined): string => {
   if (!value) return '';
-  return value.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 export const contactUsUserConfirmationTemplate = (
   submissionData: CreateContactUsDto,
-  submissionId: string
+  submissionId: string,
 ): string => {
   const fullName = toTitleCase(submissionData.fullName);
   const companyName = toTitleCase(submissionData.companyName);
@@ -96,5 +96,3 @@ export const contactUsUserConfirmationTemplate = (
   </body>
   </html>`;
 };
-
-

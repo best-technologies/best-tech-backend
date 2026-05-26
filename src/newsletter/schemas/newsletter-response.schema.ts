@@ -6,15 +6,15 @@ export const NewsletterPaginationSchema = {
     totalCount: { type: 'number', example: 100 },
     totalPages: { type: 'number', example: 10 },
     hasNext: { type: 'boolean', example: true },
-    hasPrev: { type: 'boolean', example: false }
-  }
+    hasPrev: { type: 'boolean', example: false },
+  },
 };
 
 export const NewsletterStatsSchema = {
   type: 'object',
   properties: {
-    totalSubscribers: { type: 'number', example: 100 }
-  }
+    totalSubscribers: { type: 'number', example: 100 },
+  },
 };
 
 export const NewsletterSubscriptionSchema = {
@@ -23,8 +23,8 @@ export const NewsletterSubscriptionSchema = {
     id: { type: 'string', example: 'clx1234567890' },
     email: { type: 'string', example: 'john@example.com' },
     createdAt: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
-    updatedAt: { type: 'string', example: '2024-01-01T00:00:00.000Z' }
-  }
+    updatedAt: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
+  },
 };
 
 export const NewsletterListResponseSchema = {
@@ -32,7 +32,10 @@ export const NewsletterListResponseSchema = {
   properties: {
     statusCode: { type: 'number', example: 200 },
     success: { type: 'boolean', example: true },
-    message: { type: 'string', example: 'Newsletter subscriptions fetched successfully' },
+    message: {
+      type: 'string',
+      example: 'Newsletter subscriptions fetched successfully',
+    },
     count: { type: 'number', example: 10 },
     data: {
       type: 'object',
@@ -41,11 +44,11 @@ export const NewsletterListResponseSchema = {
         stats: NewsletterStatsSchema,
         subscriptions: {
           type: 'array',
-          items: NewsletterSubscriptionSchema
-        }
-      }
-    }
-  }
+          items: NewsletterSubscriptionSchema,
+        },
+      },
+    },
+  },
 };
 
 export const NewsletterSingleResponseSchema = {
@@ -53,10 +56,13 @@ export const NewsletterSingleResponseSchema = {
   properties: {
     statusCode: { type: 'number', example: 200 },
     success: { type: 'boolean', example: true },
-    message: { type: 'string', example: 'Newsletter subscription fetched successfully' },
+    message: {
+      type: 'string',
+      example: 'Newsletter subscription fetched successfully',
+    },
     count: { type: 'number', example: 1 },
-    data: NewsletterSubscriptionSchema
-  }
+    data: NewsletterSubscriptionSchema,
+  },
 };
 
 export const NewsletterCreateResponseSchema = {
@@ -64,8 +70,11 @@ export const NewsletterCreateResponseSchema = {
   properties: {
     statusCode: { type: 'number', example: 201 },
     success: { type: 'boolean', example: true },
-    message: { type: 'string', example: 'Successfully subscribed to newsletter' },
+    message: {
+      type: 'string',
+      example: 'Successfully subscribed to newsletter',
+    },
     count: { type: 'number', example: 1 },
-    data: NewsletterSubscriptionSchema
-  }
-}; 
+    data: NewsletterSubscriptionSchema,
+  },
+};

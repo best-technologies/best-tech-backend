@@ -31,12 +31,14 @@ export class NewsletterTemplateService {
   async create(
     createNewsletterTemplateDto: CreateNewsletterTemplateDto,
     userId: string,
-    imageFiles?: MulterFile[]
+    imageFiles?: MulterFile[],
   ) {
     this.logger.log(colors.green('Creating new newsletter template...'));
 
     if (!userId) {
-      this.logger.error(colors.red('User ID is required to create newsletter template'));
+      this.logger.error(
+        colors.red('User ID is required to create newsletter template'),
+      );
       return failureResponse(
         400,
         'User ID is required to create newsletter template',
@@ -49,21 +51,30 @@ export class NewsletterTemplateService {
 
       // Upload images to Cloudinary if provided
       if (imageFiles && imageFiles.length > 0) {
-        this.logger.log(colors.blue(`Uploading ${imageFiles.length} image(s) to Cloudinary...`));
-        
+        this.logger.log(
+          colors.blue(
+            `Uploading ${imageFiles.length} image(s) to Cloudinary...`,
+          ),
+        );
+
         for (let i = 0; i < imageFiles.length; i++) {
           const imageFile = imageFiles[i];
-          const uploadResult = await this.cloudinaryService.uploadImage(imageFile, 'newsletter');
-          
+          const uploadResult = await this.cloudinaryService.uploadImage(
+            imageFile,
+            'newsletter',
+          );
+
           images.push({
             publicId: uploadResult.publicId,
             secureUrl: uploadResult.secureUrl,
             alt: `Newsletter image ${i + 1}`,
-            order: i
+            order: i,
           });
         }
-        
-        this.logger.log(colors.green(`${images.length} image(s) uploaded successfully`));
+
+        this.logger.log(
+          colors.green(`${images.length} image(s) uploaded successfully`),
+        );
       }
 
       // If images are provided in DTO, merge with uploaded images
@@ -97,7 +108,11 @@ export class NewsletterTemplateService {
         throw new Error('Failed to fetch created template');
       }
 
-      this.logger.log(colors.green(`Newsletter template created successfully with ID: ${newsletterTemplate.id}`));
+      this.logger.log(
+        colors.green(
+          `Newsletter template created successfully with ID: ${newsletterTemplate.id}`,
+        ),
+      );
 
       const formattedData = {
         id: createdTemplate.id,
@@ -125,7 +140,10 @@ export class NewsletterTemplateService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error creating newsletter template:'), error);
+      this.logger.error(
+        colors.red('Error creating newsletter template:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to create newsletter template',
@@ -135,7 +153,9 @@ export class NewsletterTemplateService {
   }
 
   async findAll(queryDto: QueryNewsletterTemplateDto) {
-    this.logger.log(colors.green('Fetching newsletter templates with filters...'));
+    this.logger.log(
+      colors.green('Fetching newsletter templates with filters...'),
+    );
 
     try {
       const {
@@ -177,24 +197,30 @@ export class NewsletterTemplateService {
       });
 
       // Get paginated results
-      const newsletterTemplates = await this.prisma.newsletterTemplate.findMany({
-        where: whereClause,
-        orderBy,
-        skip,
-        take,
-        include: {
-          createdBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
+      const newsletterTemplates = await this.prisma.newsletterTemplate.findMany(
+        {
+          where: whereClause,
+          orderBy,
+          skip,
+          take,
+          include: {
+            createdBy: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
         },
-      });
+      );
 
       if (!newsletterTemplates || newsletterTemplates.length === 0) {
-        this.logger.log(colors.yellow('No newsletter templates found with the specified filters'));
+        this.logger.log(
+          colors.yellow(
+            'No newsletter templates found with the specified filters',
+          ),
+        );
         return successResponse(
           200,
           true,
@@ -212,16 +238,24 @@ export class NewsletterTemplateService {
             },
             stats: {
               totalTemplates: totalCount,
-              draftCount: await this.prisma.newsletterTemplate.count({ where: { status: 'draft' } }),
-              sentCount: await this.prisma.newsletterTemplate.count({ where: { status: 'sent' } }),
-            }
+              draftCount: await this.prisma.newsletterTemplate.count({
+                where: { status: 'draft' },
+              }),
+              sentCount: await this.prisma.newsletterTemplate.count({
+                where: { status: 'sent' },
+              }),
+            },
           },
         );
       }
 
-      this.logger.log(colors.green(`Found ${newsletterTemplates.length} newsletter templates`));
+      this.logger.log(
+        colors.green(
+          `Found ${newsletterTemplates.length} newsletter templates`,
+        ),
+      );
 
-      const formattedData = newsletterTemplates.map(template => ({
+      const formattedData = newsletterTemplates.map((template) => ({
         id: template.id,
         subject: template.subject,
         title: template.title,
@@ -256,14 +290,21 @@ export class NewsletterTemplateService {
           },
           stats: {
             totalTemplates: totalCount,
-            draftCount: await this.prisma.newsletterTemplate.count({ where: { status: 'draft' } }),
-            sentCount: await this.prisma.newsletterTemplate.count({ where: { status: 'sent' } }),
+            draftCount: await this.prisma.newsletterTemplate.count({
+              where: { status: 'draft' },
+            }),
+            sentCount: await this.prisma.newsletterTemplate.count({
+              where: { status: 'sent' },
+            }),
           },
           templates: formattedData,
         },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching newsletter templates:'), error);
+      this.logger.error(
+        colors.red('Error fetching newsletter templates:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to fetch newsletter templates',
@@ -273,32 +314,35 @@ export class NewsletterTemplateService {
   }
 
   async findOne(id: string) {
-    this.logger.log(colors.green(`Fetching newsletter template with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Fetching newsletter template with ID: ${id}`),
+    );
 
     try {
-      const newsletterTemplate = await this.prisma.newsletterTemplate.findUnique({
-        where: { id },
-        include: {
-          createdBy: {
-            select: {
-              firstName: true,
-              lastName: true,
-              email: true,
+      const newsletterTemplate =
+        await this.prisma.newsletterTemplate.findUnique({
+          where: { id },
+          include: {
+            createdBy: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
             },
           },
-        },
-      });
+        });
 
       if (!newsletterTemplate) {
-        this.logger.log(colors.red(`Newsletter template with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter template not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter template with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter template not found', false);
       }
 
-      this.logger.log(colors.green(`Newsletter template with ID ${id} found successfully`));
+      this.logger.log(
+        colors.green(`Newsletter template with ID ${id} found successfully`),
+      );
 
       const formattedData = {
         id: newsletterTemplate.id,
@@ -309,7 +353,9 @@ export class NewsletterTemplateService {
         images: newsletterTemplate.images,
         status: newsletterTemplate.status,
         sentCount: newsletterTemplate.sentCount,
-        sentAt: newsletterTemplate.sentAt ? formatDate(newsletterTemplate.sentAt) : null,
+        sentAt: newsletterTemplate.sentAt
+          ? formatDate(newsletterTemplate.sentAt)
+          : null,
         createdAt: formatDate(newsletterTemplate.createdAt),
         updatedAt: formatDate(newsletterTemplate.updatedAt),
         createdBy: {
@@ -327,21 +373,22 @@ export class NewsletterTemplateService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching newsletter template:'), error);
-      return failureResponse(
-        500,
-        'Failed to fetch newsletter template',
-        false,
+      this.logger.error(
+        colors.red('Error fetching newsletter template:'),
+        error,
       );
+      return failureResponse(500, 'Failed to fetch newsletter template', false);
     }
   }
 
   async update(
     id: string,
     updateNewsletterTemplateDto: UpdateNewsletterTemplateDto,
-    imageFile?: MulterFile
+    imageFile?: MulterFile,
   ) {
-    this.logger.log(colors.green(`Updating newsletter template with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Updating newsletter template with ID: ${id}`),
+    );
 
     try {
       // Check if newsletter template exists
@@ -350,35 +397,38 @@ export class NewsletterTemplateService {
       });
 
       if (!existingTemplate) {
-        this.logger.log(colors.red(`Newsletter template with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter template not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter template with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter template not found', false);
       }
 
-      let images = existingTemplate.images as any[] || [];
+      const images = (existingTemplate.images as any[]) || [];
 
       // Handle image update
       if (imageFile) {
         this.logger.log(colors.blue('Uploading new image to Cloudinary...'));
-        
-        const uploadResult = await this.cloudinaryService.uploadImage(imageFile, 'newsletter');
-        
+
+        const uploadResult = await this.cloudinaryService.uploadImage(
+          imageFile,
+          'newsletter',
+        );
+
         images.push({
           publicId: uploadResult.publicId,
           secureUrl: uploadResult.secureUrl,
           alt: `Newsletter image ${images.length + 1}`,
-          order: images.length
+          order: images.length,
         });
-        
+
         this.logger.log(colors.green('Image uploaded successfully'));
       }
 
       // Filter out undefined values
       const updateData = Object.fromEntries(
-        Object.entries(updateNewsletterTemplateDto).filter(([_, value]) => value !== undefined)
+        Object.entries(updateNewsletterTemplateDto).filter(
+          ([_, value]) => value !== undefined,
+        ),
       );
 
       // Add images data if updated
@@ -386,7 +436,9 @@ export class NewsletterTemplateService {
         updateData.images = images;
       }
 
-      this.logger.log(colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`));
+      this.logger.log(
+        colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`),
+      );
 
       const updatedTemplate = await this.prisma.newsletterTemplate.update({
         where: { id },
@@ -402,7 +454,9 @@ export class NewsletterTemplateService {
         },
       });
 
-      this.logger.log(colors.green(`Newsletter template with ID ${id} updated successfully`));
+      this.logger.log(
+        colors.green(`Newsletter template with ID ${id} updated successfully`),
+      );
 
       const formattedData = {
         id: updatedTemplate.id,
@@ -413,7 +467,9 @@ export class NewsletterTemplateService {
         images: updatedTemplate.images,
         status: updatedTemplate.status,
         sentCount: updatedTemplate.sentCount,
-        sentAt: updatedTemplate.sentAt ? formatDate(updatedTemplate.sentAt) : null,
+        sentAt: updatedTemplate.sentAt
+          ? formatDate(updatedTemplate.sentAt)
+          : null,
         createdAt: formatDate(updatedTemplate.createdAt),
         updatedAt: formatDate(updatedTemplate.updatedAt),
         createdBy: {
@@ -431,7 +487,10 @@ export class NewsletterTemplateService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error updating newsletter template:'), error);
+      this.logger.error(
+        colors.red('Error updating newsletter template:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to update newsletter template',
@@ -441,7 +500,9 @@ export class NewsletterTemplateService {
   }
 
   async remove(id: string) {
-    this.logger.log(colors.green(`Deleting newsletter template with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Deleting newsletter template with ID: ${id}`),
+    );
 
     try {
       // Check if newsletter template exists
@@ -450,12 +511,10 @@ export class NewsletterTemplateService {
       });
 
       if (!existingTemplate) {
-        this.logger.log(colors.red(`Newsletter template with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter template not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter template with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter template not found', false);
       }
 
       // Delete images from Cloudinary if exists
@@ -464,9 +523,16 @@ export class NewsletterTemplateService {
         for (const image of images) {
           try {
             await this.cloudinaryService.deleteImage(image.publicId);
-            this.logger.log(colors.green(`Image ${image.publicId} deleted from Cloudinary`));
+            this.logger.log(
+              colors.green(`Image ${image.publicId} deleted from Cloudinary`),
+            );
           } catch (error) {
-            this.logger.error(colors.red(`Error deleting image ${image.publicId} from Cloudinary:`), error);
+            this.logger.error(
+              colors.red(
+                `Error deleting image ${image.publicId} from Cloudinary:`,
+              ),
+              error,
+            );
           }
         }
       }
@@ -475,7 +541,9 @@ export class NewsletterTemplateService {
         where: { id },
       });
 
-      this.logger.log(colors.green(`Newsletter template with ID ${id} deleted successfully`));
+      this.logger.log(
+        colors.green(`Newsletter template with ID ${id} deleted successfully`),
+      );
 
       return successResponse(
         200,
@@ -485,7 +553,10 @@ export class NewsletterTemplateService {
         { id },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error deleting newsletter template:'), error);
+      this.logger.error(
+        colors.red('Error deleting newsletter template:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to delete newsletter template',
@@ -499,26 +570,21 @@ export class NewsletterTemplateService {
 
     try {
       // Get the newsletter template
-      const newsletterTemplate = await this.prisma.newsletterTemplate.findUnique({
-        where: { id },
-      });
+      const newsletterTemplate =
+        await this.prisma.newsletterTemplate.findUnique({
+          where: { id },
+        });
 
       if (!newsletterTemplate) {
-        this.logger.log(colors.red(`Newsletter template with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter template not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter template with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter template not found', false);
       }
 
       if (newsletterTemplate.status === 'sent') {
         this.logger.log(colors.yellow('Newsletter has already been sent'));
-        return failureResponse(
-          400,
-          'Newsletter has already been sent',
-          false,
-        );
+        return failureResponse(400, 'Newsletter has already been sent', false);
       }
 
       // Get all newsletter subscribers
@@ -535,9 +601,13 @@ export class NewsletterTemplateService {
         );
       }
 
-      const subscriberEmails = subscribers.map(sub => sub.email);
+      const subscriberEmails = subscribers.map((sub) => sub.email);
 
-      this.logger.log(colors.blue(`Sending newsletter to ${subscriberEmails.length} subscribers`));
+      this.logger.log(
+        colors.blue(
+          `Sending newsletter to ${subscriberEmails.length} subscribers`,
+        ),
+      );
 
       // Send newsletter to all subscribers
       const sendResult = await sendNewsletterToSubscribers(
@@ -546,7 +616,7 @@ export class NewsletterTemplateService {
         newsletterTemplate.subtitle,
         newsletterTemplate.body,
         newsletterTemplate.images as any[] | null,
-        subscriberEmails
+        subscriberEmails,
       );
 
       // Update newsletter template status
@@ -559,27 +629,21 @@ export class NewsletterTemplateService {
         },
       });
 
-      this.logger.log(colors.green(`Newsletter sent successfully. Sent: ${sendResult.sent}, Failed: ${sendResult.failed}`));
-
-      return successResponse(
-        200,
-        true,
-        'Newsletter sent successfully',
-        1,
-        {
-          templateId: id,
-          sent: sendResult.sent,
-          failed: sendResult.failed,
-          totalSubscribers: subscriberEmails.length,
-        },
+      this.logger.log(
+        colors.green(
+          `Newsletter sent successfully. Sent: ${sendResult.sent}, Failed: ${sendResult.failed}`,
+        ),
       );
+
+      return successResponse(200, true, 'Newsletter sent successfully', 1, {
+        templateId: id,
+        sent: sendResult.sent,
+        failed: sendResult.failed,
+        totalSubscribers: subscriberEmails.length,
+      });
     } catch (error) {
       this.logger.error(colors.red('Error sending newsletter:'), error);
-      return failureResponse(
-        500,
-        'Failed to send newsletter',
-        false,
-      );
+      return failureResponse(500, 'Failed to send newsletter', false);
     }
   }
-} 
+}

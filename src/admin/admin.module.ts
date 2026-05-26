@@ -4,14 +4,16 @@ import { AdminService } from './admin.service';
 import { AdminUsersModule } from './users/users.module';
 import { AdminAuthModule } from './auth/auth.module';
 import { ServicesModule } from 'src/services/services.module';
+import { DepartmentModule } from './department/department.module';
 
 @Module({
   imports: [
     AdminUsersModule,
     AdminAuthModule,
-    ServicesModule
+    ServicesModule,
+    DepartmentModule,
   ],
   controllers: [AdminController],
-  providers: [AdminService]
+  providers: [AdminService],
 })
 export class AdminModule {}

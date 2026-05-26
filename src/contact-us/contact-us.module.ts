@@ -10,4 +10,4 @@ import { LoggerModule } from '../common/logger/logger.module';
   providers: [ContactUsService],
   exports: [ContactUsService],
 })
-export class ContactUsModule {} 
+export class ContactUsModule {}

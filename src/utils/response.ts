@@ -1,42 +1,51 @@
 // src/utils/response.ts
 
-export function successResponse(
-    statusCode: number,
-    success: boolean = true,
-    message: string,
-    length?: number,
-    data?: any
-  ): any {
-    const response: any = {
-      statusCode,
-      success,
-      message,
-    };
-  
-    if (length !== undefined) {
-      response.length = length;
-    }
-  
-    if (data !== undefined) {
-      response.data = data;
-    }
-  
-    return response;
+export interface ApiResponse<T = unknown> {
+  statusCode: number;
+  success: boolean;
+  message: string;
+  length?: number;
+  data?: T;
+  error?: unknown;
+}
+
+export function successResponse<T = unknown>(
+  statusCode: number,
+  success: boolean = true,
+  message: string,
+  length?: number,
+  data?: T,
+): ApiResponse<T> {
+  const response: ApiResponse<T> = {
+    statusCode,
+    success,
+    message,
+  };
+
+  if (length !== undefined) {
+    response.length = length;
   }
-  
-  export function failureResponse(
-    statusCode: number,
-    message: string,
-    success: boolean = false, 
-    error: any = null, 
-): any {
-    return {
-        statusCode,
-        success,
-        message,
-        error,
-    };
+
+  if (data !== undefined) {
+    response.data = data;
   }
+
+  return response;
+}
+
+export function failureResponse(
+  statusCode: number,
+  message: string,
+  success: boolean = false,
+  error: unknown = null,
+): ApiResponse<never> {
+  return {
+    statusCode,
+    success,
+    message,
+    error,
+  };
+}
 
 //   <script type="text/javascript">
 //   (function(d, t) {
@@ -53,15 +62,13 @@ export function successResponse(
 //             persistence: 'localStorage' // Configure persistence here
 //           }
 //         });
-//         window.voiceflow.chat.proactive.push(  
-//           { 
-//             type: 'text', 
-//             payload: { message: "Need instant reply?, clcik here to proceed" } 
+//         window.voiceflow.chat.proactive.push(
+//           {
+//             type: 'text',
+//             payload: { message: "Need instant reply?, clcik here to proceed" }
 //           },
 //         )
 //       }
 //       v.src = "https://cdn.voiceflow.com/widget-next/bundle.mjs"; v.type = "text/javascript"; s.parentNode.insertBefore(v, s);
 //   })(document, 'script');
 // </script>
-  
- 

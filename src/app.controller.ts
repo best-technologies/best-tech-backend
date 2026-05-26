@@ -8,17 +8,17 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @ApiOperation({ summary: 'Get application health status' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Application is healthy',
     schema: {
       type: 'object',
       properties: {
         message: { type: 'string', example: 'B-Tech Backend is running!' },
         timestamp: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
-        status: { type: 'string', example: 'healthy' }
-      }
-    }
+        status: { type: 'string', example: 'healthy' },
+      },
+    },
   })
   @Get()
   getHello(): string {
@@ -26,8 +26,8 @@ export class AppController {
   }
 
   @ApiOperation({ summary: 'Health check endpoint' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Health check successful',
     schema: {
       type: 'object',
@@ -35,9 +35,9 @@ export class AppController {
         status: { type: 'string', example: 'ok' },
         timestamp: { type: 'string', example: '2024-01-01T00:00:00.000Z' },
         uptime: { type: 'number', example: 123.456 },
-        environment: { type: 'string', example: 'development' }
-      }
-    }
+        environment: { type: 'string', example: 'development' },
+      },
+    },
   })
   @Get('health')
   getHealth() {
@@ -45,7 +45,7 @@ export class AppController {
       status: 'ok',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     };
   }
 }

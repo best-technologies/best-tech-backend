@@ -40,13 +40,15 @@ export class NewsletterTemplateController {
   ) {}
 
   @Post()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create a new newsletter template (draft)',
-    description: 'Creates a newsletter template in draft status. Use the /send endpoint to actually send it to subscribers.'
+    description:
+      'Creates a newsletter template in draft status. Use the /send endpoint to actually send it to subscribers.',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Newsletter template data with optional images. Template will be created as draft by default.',
+    description:
+      'Newsletter template data with optional images. Template will be created as draft by default.',
     type: CreateNewsletterTemplateDto,
   })
   @ApiResponse({
@@ -56,11 +58,7 @@ export class NewsletterTemplateController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'images', maxCount: 10 },
-    ])
-  )
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 10 }]))
   async create(
     @Body() createNewsletterTemplateDto: CreateNewsletterTemplateDto,
     @UploadedFiles() files: { images?: Express.Multer.File[] },
@@ -115,11 +113,7 @@ export class NewsletterTemplateController {
   @ApiResponse({ status: 404, description: 'Newsletter template not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'images', maxCount: 10 },
-    ])
-  )
+  @UseInterceptors(FileFieldsInterceptor([{ name: 'images', maxCount: 10 }]))
   async update(
     @Param('id') id: string,
     @Body() updateNewsletterTemplateDto: UpdateNewsletterTemplateDto,
@@ -147,19 +141,23 @@ export class NewsletterTemplateController {
   }
 
   @Post(':id/send')
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Send newsletter to all subscribers',
-    description: 'Sends the newsletter template to all subscribed users. This will change the template status to "sent" and track delivery statistics.'
+    description:
+      'Sends the newsletter template to all subscribed users. This will change the template status to "sent" and track delivery statistics.',
   })
   @ApiResponse({
     status: 200,
     description: 'Newsletter sent successfully to all subscribers',
   })
   @ApiResponse({ status: 404, description: 'Newsletter template not found' })
-  @ApiResponse({ status: 400, description: 'Newsletter already sent or no subscribers found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Newsletter already sent or no subscribers found',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async sendNewsletter(@Param('id') id: string) {
     return this.newsletterTemplateService.sendNewsletter(id);
   }
-} 
+}

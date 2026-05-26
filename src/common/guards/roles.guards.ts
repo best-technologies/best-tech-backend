@@ -16,14 +16,14 @@ export class RolesGuard implements CanActivate {
     if (!requiredRoles) return true; // No role restriction on this route
 
     const { user } = context.switchToHttp().getRequest();
-    console.log("user role: ", user?.role);
-    
+    console.log('user role: ', user?.role);
+
     // Case-insensitive role comparison
     const userRole = user?.role?.toLowerCase();
-    const hasRequiredRole = requiredRoles.some(requiredRole => 
-      requiredRole.toLowerCase() === userRole
+    const hasRequiredRole = requiredRoles.some(
+      (requiredRole) => requiredRole.toLowerCase() === userRole,
     );
-    
+
     return hasRequiredRole; // Only allow if user has required role
   }
 }

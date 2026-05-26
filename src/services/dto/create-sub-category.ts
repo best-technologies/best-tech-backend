@@ -1,10 +1,9 @@
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty } from 'class-validator';
 
 export class CreateSubcategoryDto {
-    @IsNotEmpty()
-    subcategoryName: string;
-  
-    @IsNotEmpty()
-    categoryId: string;
-  }
-  
+  @IsNotEmpty()
+  subcategoryName: string;
+
+  @IsNotEmpty()
+  categoryId: string;
+}

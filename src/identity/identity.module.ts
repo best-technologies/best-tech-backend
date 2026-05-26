@@ -27,12 +27,7 @@ import { LoggerModule } from '../common/logger/logger.module';
     LoggerModule,
   ],
   controllers: [IdentityController],
-  providers: [
-    IdentityService, 
-    JwtStrategy, 
-    JwtRefreshStrategy,
-    JwtAuthGuard
-  ],
+  providers: [IdentityService, JwtStrategy, JwtRefreshStrategy, JwtAuthGuard],
   exports: [IdentityService, JwtAuthGuard],
 })
 export class IdentityModule {}

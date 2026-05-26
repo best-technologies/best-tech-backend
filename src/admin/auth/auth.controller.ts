@@ -1,4 +1,11 @@
-import { Controller, Post, Body, Res, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { Response } from 'express';
 import { AdminSignInDto, VerifyOtpDto } from '../dto/admin-auth.dto';
 import { AdminAuthService } from './auth.service';

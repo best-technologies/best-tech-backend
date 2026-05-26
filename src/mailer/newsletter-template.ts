@@ -12,7 +12,7 @@ export const newsletterEmailTemplate = (
   subtitle: string | null,
   body: string,
   images: NewsletterImage[] | null,
-  unsubscribeUrl: string
+  unsubscribeUrl: string,
 ): string => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -21,7 +21,7 @@ export const newsletterEmailTemplate = (
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).format(date);
   };
 
@@ -288,28 +288,39 @@ export const newsletterEmailTemplate = (
         </div>
         
         <div class="content">
-            ${images && images.length > 0 ? `
+            ${
+              images && images.length > 0
+                ? `
             <div class="newsletter-images">
                 ${images
                   .sort((a, b) => (a.order || 0) - (b.order || 0))
-                  .map(image => `
+                  .map(
+                    (image) => `
                     <div class="newsletter-image">
                         <img src="${image.secureUrl}" alt="${image.alt || 'Newsletter Image'}" />
                         ${image.caption ? `<p class="image-caption">${image.caption}</p>` : ''}
                     </div>
-                  `).join('')}
+                  `,
+                  )
+                  .join('')}
             </div>
-            ` : ''}
+            `
+                : ''
+            }
             
             <div class="newsletter-title">
                 <h2>${title}</h2>
             </div>
             
-            ${subtitle ? `
+            ${
+              subtitle
+                ? `
             <div class="newsletter-subtitle">
                 <p>${subtitle}</p>
             </div>
-            ` : ''}
+            `
+                : ''
+            }
             
             <div class="newsletter-body">
                 ${body}
@@ -346,4 +357,4 @@ export const newsletterEmailTemplate = (
     </div>
 </body>
 </html>`;
-}; 
+};

@@ -19,10 +19,12 @@ export class CloudinaryService {
 
   async uploadImage(
     file: { buffer: Buffer; mimetype: string },
-    folder: string = 'best-technologies/newsletter'
+    folder: string = 'best-technologies/newsletter',
   ): Promise<{ publicId: string; secureUrl: string }> {
     try {
-      this.logger.log(colors.blue(`Uploading image to Cloudinary folder: ${folder}`));
+      this.logger.log(
+        colors.blue(`Uploading image to Cloudinary folder: ${folder}`),
+      );
 
       // Convert buffer to base64
       const base64Image = file.buffer.toString('base64');
@@ -33,18 +35,23 @@ export class CloudinaryService {
         resource_type: 'auto',
         transformation: [
           { width: 800, height: 600, crop: 'limit' },
-          { quality: 'auto', fetch_format: 'auto' }
-        ]
+          { quality: 'auto', fetch_format: 'auto' },
+        ],
       });
 
-      this.logger.log(colors.green(`Image uploaded successfully: ${result.public_id}`));
+      this.logger.log(
+        colors.green(`Image uploaded successfully: ${result.public_id}`),
+      );
 
       return {
         publicId: result.public_id,
         secureUrl: result.secure_url,
       };
     } catch (error) {
-      this.logger.error(colors.red('Error uploading image to Cloudinary:'), error);
+      this.logger.error(
+        colors.red('Error uploading image to Cloudinary:'),
+        error,
+      );
       console.error('Full Cloudinary error:', error);
       throw new Error(`Failed to upload image to Cloudinary: ${error.message}`);
     }
@@ -52,20 +59,25 @@ export class CloudinaryService {
 
   async deleteImage(publicId: string): Promise<void> {
     try {
-      this.logger.log(colors.blue(`Deleting image from Cloudinary: ${publicId}`));
+      this.logger.log(
+        colors.blue(`Deleting image from Cloudinary: ${publicId}`),
+      );
 
       await cloudinary.uploader.destroy(publicId);
 
       this.logger.log(colors.green(`Image deleted successfully: ${publicId}`));
     } catch (error) {
-      this.logger.error(colors.red('Error deleting image from Cloudinary:'), error);
+      this.logger.error(
+        colors.red('Error deleting image from Cloudinary:'),
+        error,
+      );
       throw new Error('Failed to delete image from Cloudinary');
     }
   }
 
   async updateImage(
     publicId: string,
-    file: { buffer: Buffer; mimetype: string }
+    file: { buffer: Buffer; mimetype: string },
   ): Promise<{ publicId: string; secureUrl: string }> {
     try {
       this.logger.log(colors.blue(`Updating image in Cloudinary: ${publicId}`));
@@ -76,8 +88,11 @@ export class CloudinaryService {
       // Upload new image
       return await this.uploadImage(file);
     } catch (error) {
-      this.logger.error(colors.red('Error updating image in Cloudinary:'), error);
+      this.logger.error(
+        colors.red('Error updating image in Cloudinary:'),
+        error,
+      );
       throw new Error('Failed to update image in Cloudinary');
     }
   }
-} 
+}

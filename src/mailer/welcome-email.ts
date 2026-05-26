@@ -1,4 +1,8 @@
-export const welcomeEmailTemplate = (firstName: string, lastName: string, email: string): string => {
+export const welcomeEmailTemplate = (
+  firstName: string,
+  lastName: string,
+  email: string,
+): string => {
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
@@ -6,7 +10,7 @@ export const welcomeEmailTemplate = (firstName: string, lastName: string, email:
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     }).format(date);
   };
 
@@ -397,4 +401,4 @@ export const welcomeEmailTemplate = (firstName: string, lastName: string, email:
     </div>
 </body>
 </html>`;
-}; 
+};

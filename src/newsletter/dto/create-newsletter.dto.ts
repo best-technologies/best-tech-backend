@@ -9,4 +9,4 @@ export class CreateNewsletterDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
-} 
+}

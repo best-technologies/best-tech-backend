@@ -13,13 +13,23 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const authHeader = request.headers.authorization;
 
     if (!authHeader) {
-      this.logger.warn('JWT token not provided in Authorization header', 'JWT-Auth');
-      throw new UnauthorizedException('JWT token not provided in Authorization header');
+      this.logger.warn(
+        'JWT token not provided in Authorization header',
+        'JWT-Auth',
+      );
+      throw new UnauthorizedException(
+        'JWT token not provided in Authorization header',
+      );
     }
 
     if (!authHeader.startsWith('Bearer ')) {
-      this.logger.warn('Invalid Authorization header format. Expected: Bearer <token>', 'JWT-Auth');
-      throw new UnauthorizedException('Invalid Authorization header format. Expected: Bearer <token>');
+      this.logger.warn(
+        'Invalid Authorization header format. Expected: Bearer <token>',
+        'JWT-Auth',
+      );
+      throw new UnauthorizedException(
+        'Invalid Authorization header format. Expected: Bearer <token>',
+      );
     }
 
     if (err || !user) {

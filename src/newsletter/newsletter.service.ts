@@ -7,9 +7,9 @@ import { successResponse, failureResponse } from '../utils/response';
 import { LoggerService } from '../common/logger/logger.service';
 import * as colors from 'colors';
 import { formatDate } from 'src/common/helper-functions/formatter';
-import { 
-  sendNewsletterSubscriptionAdminNotification, 
-  sendNewsletterWelcomeEmail 
+import {
+  sendNewsletterSubscriptionAdminNotification,
+  sendNewsletterWelcomeEmail,
 } from '../mailer/send-email';
 
 @Injectable()
@@ -27,17 +27,28 @@ export class NewsletterService {
         data: createNewsletterDto,
       });
 
-      this.logger.log(colors.green(`Newsletter subscription created successfully with ID: ${newsletter.id}`));
+      this.logger.log(
+        colors.green(
+          `Newsletter subscription created successfully with ID: ${newsletter.id}`,
+        ),
+      );
 
       // Send welcome email to the subscriber
       try {
-        this.logger.log(colors.blue(`Sending welcome email to ${newsletter.email}`));
-        
+        this.logger.log(
+          colors.blue(`Sending welcome email to ${newsletter.email}`),
+        );
+
         await sendNewsletterWelcomeEmail(newsletter.email);
-        
-        this.logger.log(colors.green('Newsletter welcome email sent successfully'));
+
+        this.logger.log(
+          colors.green('Newsletter welcome email sent successfully'),
+        );
       } catch (emailError) {
-        this.logger.error(colors.red('Error sending newsletter welcome email:'), emailError);
+        this.logger.error(
+          colors.red('Error sending newsletter welcome email:'),
+          emailError,
+        );
         // Don't fail the main operation if email fails
       }
 
@@ -46,34 +57,45 @@ export class NewsletterService {
         // Get all admin users
         const adminUsers = await this.prisma.user.findMany({
           where: {
-            role: 'admin'
+            role: 'admin',
           },
           select: {
-            email: true
-          }
+            email: true,
+          },
         });
 
         if (adminUsers.length > 0) {
-          const adminEmails = adminUsers.map(user => user.email);
-          
-          this.logger.log(colors.blue(`Sending admin notification to ${adminEmails.length} admin(s)`));
-          
+          const adminEmails = adminUsers.map((user) => user.email);
+
+          this.logger.log(
+            colors.blue(
+              `Sending admin notification to ${adminEmails.length} admin(s)`,
+            ),
+          );
+
           // Get newsletter statistics
           const newsletterStats = await this.getNewsletterStats();
-          
+
           await sendNewsletterSubscriptionAdminNotification(
             adminEmails,
             newsletter.email,
             newsletter.id,
-            newsletterStats
+            newsletterStats,
           );
-          
-          this.logger.log(colors.green('Admin notification email sent successfully'));
+
+          this.logger.log(
+            colors.green('Admin notification email sent successfully'),
+          );
         } else {
-          this.logger.warn(colors.yellow('No admin users found to send notification'));
+          this.logger.warn(
+            colors.yellow('No admin users found to send notification'),
+          );
         }
       } catch (emailError) {
-        this.logger.error(colors.red('Error sending admin notification email:'), emailError);
+        this.logger.error(
+          colors.red('Error sending admin notification email:'),
+          emailError,
+        );
         // Don't fail the main operation if email fails
       }
 
@@ -94,20 +116,25 @@ export class NewsletterService {
     } catch (error) {
       if (error.code === 'P2002') {
         this.logger.log(colors.red('Email already subscribed to newsletter'));
-        return failureResponse(409, 'Email already subscribed to newsletter', false);
+        return failureResponse(
+          409,
+          'Email already subscribed to newsletter',
+          false,
+        );
       }
-      
-      this.logger.error(colors.red('Error creating newsletter subscription:'), error);
-      return failureResponse(
-        500,
-        'Failed to subscribe to newsletter',
-        false,
+
+      this.logger.error(
+        colors.red('Error creating newsletter subscription:'),
+        error,
       );
+      return failureResponse(500, 'Failed to subscribe to newsletter', false);
     }
   }
 
   async findAll(queryDto: QueryNewsletterDto) {
-    this.logger.log(colors.green('Fetching newsletter subscriptions with filters...'));
+    this.logger.log(
+      colors.green('Fetching newsletter subscriptions with filters...'),
+    );
 
     try {
       const {
@@ -147,7 +174,11 @@ export class NewsletterService {
       });
 
       if (!newsletterSubscriptions || newsletterSubscriptions.length === 0) {
-        this.logger.log(colors.yellow('No newsletter subscriptions found with the specified filters'));
+        this.logger.log(
+          colors.yellow(
+            'No newsletter subscriptions found with the specified filters',
+          ),
+        );
         return successResponse(
           200,
           true,
@@ -164,15 +195,19 @@ export class NewsletterService {
               hasPrev: page > 1,
             },
             stats: {
-              totalSubscribers: totalCount
-            }
+              totalSubscribers: totalCount,
+            },
           },
         );
       }
 
-      this.logger.log(colors.green(`Found ${newsletterSubscriptions.length} newsletter subscriptions`));
+      this.logger.log(
+        colors.green(
+          `Found ${newsletterSubscriptions.length} newsletter subscriptions`,
+        ),
+      );
 
-      const formattedData = newsletterSubscriptions.map(subscription => ({
+      const formattedData = newsletterSubscriptions.map((subscription) => ({
         id: subscription.id,
         email: subscription.email,
         createdAt: formatDate(subscription.createdAt),
@@ -194,13 +229,16 @@ export class NewsletterService {
             hasPrev: page > 1,
           },
           stats: {
-            totalSubscribers: totalCount
+            totalSubscribers: totalCount,
           },
           subscriptions: formattedData,
         },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching newsletter subscriptions:'), error);
+      this.logger.error(
+        colors.red('Error fetching newsletter subscriptions:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to fetch newsletter subscriptions',
@@ -210,7 +248,9 @@ export class NewsletterService {
   }
 
   async findOne(id: string) {
-    this.logger.log(colors.green(`Fetching newsletter subscription with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Fetching newsletter subscription with ID: ${id}`),
+    );
 
     try {
       const newsletter = await this.prisma.newsletter.findUnique({
@@ -218,15 +258,17 @@ export class NewsletterService {
       });
 
       if (!newsletter) {
-        this.logger.log(colors.red(`Newsletter subscription with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter subscription not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter subscription with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter subscription not found', false);
       }
 
-      this.logger.log(colors.green(`Newsletter subscription with ID ${id} found successfully`));
+      this.logger.log(
+        colors.green(
+          `Newsletter subscription with ID ${id} found successfully`,
+        ),
+      );
 
       const formattedData = {
         id: newsletter.id,
@@ -243,7 +285,10 @@ export class NewsletterService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching newsletter subscription:'), error);
+      this.logger.error(
+        colors.red('Error fetching newsletter subscription:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to fetch newsletter subscription',
@@ -253,7 +298,9 @@ export class NewsletterService {
   }
 
   async update(id: string, updateNewsletterDto: UpdateNewsletterDto) {
-    this.logger.log(colors.green(`Updating newsletter subscription with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Updating newsletter subscription with ID: ${id}`),
+    );
 
     try {
       // Check if newsletter subscription exists
@@ -262,27 +309,33 @@ export class NewsletterService {
       });
 
       if (!existingNewsletter) {
-        this.logger.log(colors.red(`Newsletter subscription with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter subscription not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter subscription with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter subscription not found', false);
       }
 
       // Filter out undefined values to only update passed fields
       const updateData = Object.fromEntries(
-        Object.entries(updateNewsletterDto).filter(([_, value]) => value !== undefined)
+        Object.entries(updateNewsletterDto).filter(
+          ([_, value]) => value !== undefined,
+        ),
       );
 
-      this.logger.log(colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`));
+      this.logger.log(
+        colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`),
+      );
 
       const updatedNewsletter = await this.prisma.newsletter.update({
         where: { id },
         data: updateData,
       });
 
-      this.logger.log(colors.green(`Newsletter subscription with ID ${id} updated successfully`));
+      this.logger.log(
+        colors.green(
+          `Newsletter subscription with ID ${id} updated successfully`,
+        ),
+      );
 
       const formattedData = {
         id: updatedNewsletter.id,
@@ -299,7 +352,10 @@ export class NewsletterService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error updating newsletter subscription:'), error);
+      this.logger.error(
+        colors.red('Error updating newsletter subscription:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to update newsletter subscription',
@@ -309,7 +365,9 @@ export class NewsletterService {
   }
 
   async remove(id: string) {
-    this.logger.log(colors.green(`Deleting newsletter subscription with ID: ${id}`));
+    this.logger.log(
+      colors.green(`Deleting newsletter subscription with ID: ${id}`),
+    );
 
     try {
       // Check if newsletter subscription exists
@@ -318,19 +376,21 @@ export class NewsletterService {
       });
 
       if (!existingNewsletter) {
-        this.logger.log(colors.red(`Newsletter subscription with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Newsletter subscription not found',
-          false,
+        this.logger.log(
+          colors.red(`Newsletter subscription with ID ${id} not found`),
         );
+        return failureResponse(404, 'Newsletter subscription not found', false);
       }
 
       await this.prisma.newsletter.delete({
         where: { id },
       });
 
-      this.logger.log(colors.green(`Newsletter subscription with ID ${id} deleted successfully`));
+      this.logger.log(
+        colors.green(
+          `Newsletter subscription with ID ${id} deleted successfully`,
+        ),
+      );
 
       return successResponse(
         200,
@@ -340,7 +400,10 @@ export class NewsletterService {
         { id },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error deleting newsletter subscription:'), error);
+      this.logger.error(
+        colors.red('Error deleting newsletter subscription:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to delete newsletter subscription',
@@ -358,7 +421,9 @@ export class NewsletterService {
       });
 
       if (!newsletter) {
-        this.logger.log(colors.red(`Email ${email} not found in newsletter subscription`));
+        this.logger.log(
+          colors.red(`Email ${email} not found in newsletter subscription`),
+        );
         return failureResponse(
           404,
           'Email not found in newsletter subscription',
@@ -380,7 +445,10 @@ export class NewsletterService {
         { email },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error unsubscribing from newsletter:'), error);
+      this.logger.error(
+        colors.red('Error unsubscribing from newsletter:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to unsubscribe from newsletter',
@@ -398,7 +466,7 @@ export class NewsletterService {
       const thisMonthStart = new Date();
       thisMonthStart.setDate(1);
       thisMonthStart.setHours(0, 0, 0, 0);
-      
+
       const thisMonthSubscribers = await this.prisma.newsletter.count({
         where: {
           createdAt: {
@@ -411,7 +479,7 @@ export class NewsletterService {
       const thisWeekStart = new Date();
       thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
       thisWeekStart.setHours(0, 0, 0, 0);
-      
+
       const thisWeekSubscribers = await this.prisma.newsletter.count({
         where: {
           createdAt: {
@@ -423,7 +491,7 @@ export class NewsletterService {
       // Calculate average subscribers per month (last 6 months)
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      
+
       const subscribersLast6Months = await this.prisma.newsletter.count({
         where: {
           createdAt: {
@@ -442,7 +510,7 @@ export class NewsletterService {
       });
 
       const domainCounts: { [key: string]: number } = {};
-      allSubscribers.forEach(subscriber => {
+      allSubscribers.forEach((subscriber) => {
         const domain = subscriber.email.split('@')[1];
         domainCounts[domain] = (domainCounts[domain] || 0) + 1;
       });
@@ -477,4 +545,4 @@ export class NewsletterService {
       };
     }
   }
-} 
+}

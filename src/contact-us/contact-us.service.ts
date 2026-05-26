@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateContactUsDto } from './dto/create-contact-us.dto';
 import { UpdateContactUsDto } from './dto/update-contact-us.dto';
@@ -7,7 +11,10 @@ import { successResponse, failureResponse } from '../utils/response';
 import { LoggerService } from '../common/logger/logger.service';
 import * as colors from 'colors';
 import { formatDate } from 'src/common/helper-functions/formatter';
-import { sendContactUsNotification, sendContactUsUserConfirmation } from '../mailer/send-email';
+import {
+  sendContactUsNotification,
+  sendContactUsUserConfirmation,
+} from '../mailer/send-email';
 
 @Injectable()
 export class ContactUsService {
@@ -27,51 +34,75 @@ export class ContactUsService {
         },
       });
 
-      this.logger.log(colors.green(`Contact us entry created successfully with ID: ${contactUs.id}`));
+      this.logger.log(
+        colors.green(
+          `Contact us entry created successfully with ID: ${contactUs.id}`,
+        ),
+      );
 
       // Send email notification to admins
       try {
         // Get all admin users
         const adminUsers = await this.prisma.user.findMany({
           where: {
-            role: 'admin'
+            role: 'admin',
           },
           select: {
-            email: true
-          }
+            email: true,
+          },
         });
 
         if (adminUsers.length > 0) {
-          const adminEmails = adminUsers.map(user => user.email);
-          
-          this.logger.log(colors.blue(`Sending notification to ${adminEmails.length} admin(s)`));
-          
+          const adminEmails = adminUsers.map((user) => user.email);
+
+          this.logger.log(
+            colors.blue(
+              `Sending notification to ${adminEmails.length} admin(s)`,
+            ),
+          );
+
           await sendContactUsNotification(
             adminEmails,
             createContactUsDto,
-            contactUs.id
+            contactUs.id,
           );
-          
-          this.logger.log(colors.green('Admin notification email sent successfully'));
+
+          this.logger.log(
+            colors.green('Admin notification email sent successfully'),
+          );
         } else {
-          this.logger.warn(colors.yellow('No admin users found to send notification'));
+          this.logger.warn(
+            colors.yellow('No admin users found to send notification'),
+          );
         }
       } catch (emailError) {
-        this.logger.error(colors.red('Error sending admin notification email:'), emailError);
+        this.logger.error(
+          colors.red('Error sending admin notification email:'),
+          emailError,
+        );
         // Don't fail the main operation if email fails
       }
 
       // Send confirmation email to the submitting user (non-blocking failure)
       try {
-        this.logger.log(colors.blue(`Sending confirmation to user: ${createContactUsDto.email}`));
+        this.logger.log(
+          colors.blue(
+            `Sending confirmation to user: ${createContactUsDto.email}`,
+          ),
+        );
         await sendContactUsUserConfirmation(
           createContactUsDto.email,
           createContactUsDto,
-          contactUs.id
+          contactUs.id,
         );
-        this.logger.log(colors.green('User confirmation email sent successfully'));
+        this.logger.log(
+          colors.green('User confirmation email sent successfully'),
+        );
       } catch (userEmailError) {
-        this.logger.error(colors.red('Error sending user confirmation email:'), userEmailError);
+        this.logger.error(
+          colors.red('Error sending user confirmation email:'),
+          userEmailError,
+        );
         // Do not fail the operation on email failure
       }
 
@@ -100,16 +131,14 @@ export class ContactUsService {
       );
     } catch (error) {
       this.logger.error(colors.red('Error creating contact us entry:'), error);
-      return failureResponse(
-        500,
-        'Failed to create contact us entry',
-        false,
-      );
+      return failureResponse(500, 'Failed to create contact us entry', false);
     }
   }
 
   async findAll(queryDto: QueryContactUsDto) {
-    this.logger.log(colors.green('Fetching contact us entries with filters...'));
+    this.logger.log(
+      colors.green('Fetching contact us entries with filters...'),
+    );
 
     try {
       const {
@@ -184,7 +213,7 @@ export class ContactUsService {
 
       // Create a map of status counts
       const statusMap = new Map();
-      statusCounts.forEach(stat => {
+      statusCounts.forEach((stat) => {
         statusMap.set(stat.status, stat._count.status);
       });
 
@@ -199,25 +228,31 @@ export class ContactUsService {
         'project_completed',
         'on_hold',
         'cancelled',
-        'rejected'
+        'rejected',
       ];
 
       // Create stats cards data
-      const statsCards = allStatuses.map(status => ({
+      const statsCards = allStatuses.map((status) => ({
         status,
         count: statusMap.get(status) || 0,
-        label: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        label: status
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (l) => l.toUpperCase()),
       }));
 
       // Add "All" card
       const allCard = {
         status: 'all',
         count: allCount,
-        label: 'All'
+        label: 'All',
       };
 
       if (!contactUsEntries || contactUsEntries.length === 0) {
-        this.logger.log(colors.yellow('No contact us entries found with the specified filters'));
+        this.logger.log(
+          colors.yellow(
+            'No contact us entries found with the specified filters',
+          ),
+        );
         return successResponse(
           200,
           true,
@@ -236,15 +271,17 @@ export class ContactUsService {
             statsCards: {
               allCard,
               statusCards: statsCards,
-              totalCount: allCount
-            }
+              totalCount: allCount,
+            },
           },
         );
       }
 
-      this.logger.log(colors.green(`Found ${contactUsEntries.length} contact us entries`));
+      this.logger.log(
+        colors.green(`Found ${contactUsEntries.length} contact us entries`),
+      );
 
-      const formattedData = contactUsEntries.map(entry => ({
+      const formattedData = contactUsEntries.map((entry) => ({
         id: entry.id,
         fullName: entry.fullName,
         email: entry.email,
@@ -277,18 +314,17 @@ export class ContactUsService {
           statsCards: {
             allCard,
             statusCards: statsCards,
-            totalCount: allCount
+            totalCount: allCount,
           },
           entries: formattedData,
         },
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching contact us entries:'), error);
-      return failureResponse(
-        500,
-        'Failed to fetch contact us entries',
-        false,
+      this.logger.error(
+        colors.red('Error fetching contact us entries:'),
+        error,
       );
+      return failureResponse(500, 'Failed to fetch contact us entries', false);
     }
   }
 
@@ -302,14 +338,12 @@ export class ContactUsService {
 
       if (!contactUs) {
         this.logger.log(colors.red(`Contact us entry with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Contact us entry not found',
-          false,
-        );
+        return failureResponse(404, 'Contact us entry not found', false);
       }
 
-      this.logger.log(colors.green(`Contact us entry with ID ${id} found successfully`));
+      this.logger.log(
+        colors.green(`Contact us entry with ID ${id} found successfully`),
+      );
 
       const formattedData = {
         id: contactUs.id,
@@ -336,11 +370,7 @@ export class ContactUsService {
       );
     } catch (error) {
       this.logger.error(colors.red('Error fetching contact us entry:'), error);
-      return failureResponse(
-        500,
-        'Failed to fetch contact us entry',
-        false,
-      );
+      return failureResponse(500, 'Failed to fetch contact us entry', false);
     }
   }
 
@@ -355,26 +385,28 @@ export class ContactUsService {
 
       if (!existingContactUs) {
         this.logger.log(colors.red(`Contact us entry with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Contact us entry not found',
-          false,
-        );
+        return failureResponse(404, 'Contact us entry not found', false);
       }
 
       // Filter out undefined values to only update passed fields
       const updateData = Object.fromEntries(
-        Object.entries(updateContactUsDto).filter(([_, value]) => value !== undefined)
+        Object.entries(updateContactUsDto).filter(
+          ([_, value]) => value !== undefined,
+        ),
       );
 
-      this.logger.log(colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`));
+      this.logger.log(
+        colors.green(`Updating fields: ${Object.keys(updateData).join(', ')}`),
+      );
 
       const updatedContactUs = await this.prisma.contactUs.update({
         where: { id },
         data: updateData,
       });
 
-      this.logger.log(colors.green(`Contact us entry with ID ${id} updated successfully`));
+      this.logger.log(
+        colors.green(`Contact us entry with ID ${id} updated successfully`),
+      );
 
       const formattedData = {
         id: updatedContactUs.id,
@@ -401,11 +433,7 @@ export class ContactUsService {
       );
     } catch (error) {
       this.logger.error(colors.red('Error updating contact us entry:'), error);
-      return failureResponse(
-        500,
-        'Failed to update contact us entry',
-        false,
-      );
+      return failureResponse(500, 'Failed to update contact us entry', false);
     }
   }
 
@@ -420,18 +448,16 @@ export class ContactUsService {
 
       if (!existingContactUs) {
         this.logger.log(colors.red(`Contact us entry with ID ${id} not found`));
-        return failureResponse(
-          404,
-          'Contact us entry not found',
-          false,
-        );
+        return failureResponse(404, 'Contact us entry not found', false);
       }
 
       await this.prisma.contactUs.delete({
         where: { id },
       });
 
-      this.logger.log(colors.green(`Contact us entry with ID ${id} deleted successfully`));
+      this.logger.log(
+        colors.green(`Contact us entry with ID ${id} deleted successfully`),
+      );
 
       return successResponse(
         200,
@@ -442,11 +468,7 @@ export class ContactUsService {
       );
     } catch (error) {
       this.logger.error(colors.red('Error deleting contact us entry:'), error);
-      return failureResponse(
-        500,
-        'Failed to delete contact us entry',
-        false,
-      );
+      return failureResponse(500, 'Failed to delete contact us entry', false);
     }
   }
 
@@ -456,7 +478,7 @@ export class ContactUsService {
 
     try {
       const totalEntries = await this.prisma.contactUs.count();
-      
+
       // Get counts by status
       const statusStats = await this.prisma.contactUs.groupBy({
         by: ['status'],
@@ -484,7 +506,7 @@ export class ContactUsService {
       // Get recent entries (last 7 days)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       const recentEntries = await this.prisma.contactUs.count({
         where: {
           createdAt: {
@@ -495,22 +517,24 @@ export class ContactUsService {
 
       const formattedStats = {
         totalEntries,
-        statusStats: statusStats.map(stat => ({
+        statusStats: statusStats.map((stat) => ({
           status: stat.status,
           count: stat._count.status,
         })),
-        subjectStats: subjectStats.map(stat => ({
+        subjectStats: subjectStats.map((stat) => ({
           subject: stat.subject,
           count: stat._count.subject,
         })),
-        budgetStats: budgetStats.map(stat => ({
+        budgetStats: budgetStats.map((stat) => ({
           budget: stat.proposedBudget,
           count: stat._count.proposedBudget,
         })),
         recentEntries,
       };
 
-      this.logger.log(colors.green('Contact us statistics fetched successfully'));
+      this.logger.log(
+        colors.green('Contact us statistics fetched successfully'),
+      );
 
       return successResponse(
         200,
@@ -520,7 +544,10 @@ export class ContactUsService {
         formattedStats,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error fetching contact us statistics:'), error);
+      this.logger.error(
+        colors.red('Error fetching contact us statistics:'),
+        error,
+      );
       return failureResponse(
         500,
         'Failed to fetch contact us statistics',
@@ -530,7 +557,9 @@ export class ContactUsService {
   }
 
   async searchContactUs(query: string) {
-    this.logger.log(colors.green(`Searching contact us entries with query: ${query}`));
+    this.logger.log(
+      colors.green(`Searching contact us entries with query: ${query}`),
+    );
 
     try {
       const searchResults = await this.prisma.contactUs.findMany({
@@ -548,7 +577,11 @@ export class ContactUsService {
       });
 
       if (!searchResults || searchResults.length === 0) {
-        this.logger.log(colors.yellow('No contact us entries found matching the search query'));
+        this.logger.log(
+          colors.yellow(
+            'No contact us entries found matching the search query',
+          ),
+        );
         return successResponse(
           200,
           true,
@@ -558,9 +591,13 @@ export class ContactUsService {
         );
       }
 
-      this.logger.log(colors.green(`Found ${searchResults.length} contact us entries matching the search query`));
+      this.logger.log(
+        colors.green(
+          `Found ${searchResults.length} contact us entries matching the search query`,
+        ),
+      );
 
-      const formattedData = searchResults.map(entry => ({
+      const formattedData = searchResults.map((entry) => ({
         id: entry.id,
         fullName: entry.fullName,
         email: entry.email,
@@ -583,12 +620,11 @@ export class ContactUsService {
         formattedData,
       );
     } catch (error) {
-      this.logger.error(colors.red('Error searching contact us entries:'), error);
-      return failureResponse(
-        500,
-        'Failed to search contact us entries',
-        false,
+      this.logger.error(
+        colors.red('Error searching contact us entries:'),
+        error,
       );
+      return failureResponse(500, 'Failed to search contact us entries', false);
     }
   }
-} 
+}

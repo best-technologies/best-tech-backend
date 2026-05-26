@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Delete,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Body, Delete, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { NewsletterService } from './newsletter.service';
 import { CreateNewsletterDto } from './dto/create-newsletter.dto';
@@ -17,10 +11,10 @@ export class NewsletterPublicController {
 
   @Post('subscribe')
   @ApiOperation({ summary: 'Subscribe to newsletter (Public)' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: 'Successfully subscribed to newsletter',
-    schema: NewsletterCreateResponseSchema
+    schema: NewsletterCreateResponseSchema,
   })
   @ApiResponse({ status: 409, description: 'Email already subscribed' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -30,9 +24,15 @@ export class NewsletterPublicController {
 
   @Delete('unsubscribe')
   @ApiOperation({ summary: 'Unsubscribe from newsletter by email (Public)' })
-  @ApiResponse({ status: 200, description: 'Successfully unsubscribed from newsletter' })
-  @ApiResponse({ status: 404, description: 'Email not found in newsletter subscription' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully unsubscribed from newsletter',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Email not found in newsletter subscription',
+  })
   unsubscribe(@Query('email') email: string) {
     return this.newsletterService.unsubscribe(email);
   }
-} 
+}

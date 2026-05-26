@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEnum,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { NewsletterStatus } from '../../prisma/client';
 
@@ -14,7 +20,8 @@ export class NewsletterImageDto {
 
   @ApiProperty({
     description: 'Image secure URL from Cloudinary',
-    example: 'https://res.cloudinary.com/cloud/image/upload/v123/newsletter/abc123.jpg',
+    example:
+      'https://res.cloudinary.com/cloud/image/upload/v123/newsletter/abc123.jpg',
   })
   @IsString()
   @IsNotEmpty()
@@ -72,7 +79,8 @@ export class CreateNewsletterTemplateDto {
 
   @ApiProperty({
     description: 'Newsletter body content (HTML supported)',
-    example: '<h1>Welcome to our newsletter!</h1><p>This is the main content...</p>',
+    example:
+      '<h1>Welcome to our newsletter!</h1><p>This is the main content...</p>',
   })
   @IsString()
   @IsNotEmpty()
@@ -84,11 +92,12 @@ export class CreateNewsletterTemplateDto {
     example: [
       {
         publicId: 'newsletter/abc123',
-        secureUrl: 'https://res.cloudinary.com/cloud/image/upload/v123/newsletter/abc123.jpg',
+        secureUrl:
+          'https://res.cloudinary.com/cloud/image/upload/v123/newsletter/abc123.jpg',
         alt: 'Newsletter banner',
         caption: 'Monthly updates',
-        order: 1
-      }
+        order: 1,
+      },
     ],
   })
   @IsOptional()
@@ -97,7 +106,8 @@ export class CreateNewsletterTemplateDto {
   images?: NewsletterImageDto[];
 
   @ApiPropertyOptional({
-    description: 'Newsletter status. Defaults to "draft". Use "draft" to create template, then use /send endpoint to send to subscribers.',
+    description:
+      'Newsletter status. Defaults to "draft". Use "draft" to create template, then use /send endpoint to send to subscribers.',
     enum: NewsletterStatus,
     default: 'draft',
     example: 'draft',
@@ -105,4 +115,4 @@ export class CreateNewsletterTemplateDto {
   @IsOptional()
   @IsEnum(NewsletterStatus)
   status?: NewsletterStatus = 'draft';
-} 
+}
