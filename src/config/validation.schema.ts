@@ -14,4 +14,12 @@ export const validationSchema = Joi.object({
   EMAIL_PASSWORD: Joi.string().optional(),
   RESEND_API_KEY: Joi.string().optional(),
   RESEND_FROM_EMAIL: Joi.string().email().optional(),
+  STORAGE_PROVIDER: Joi.string()
+    .valid('aws-s3', 's3', 'cloudinary')
+    .default('cloudinary'),
+  AWS_ACCESS_KEY_ID: Joi.string().optional().allow(''),
+  AWS_SECRET_ACCESS_KEY: Joi.string().optional().allow(''),
+  AWS_REGION: Joi.string().optional().allow(''),
+  AWS_S3_BUCKET: Joi.string().optional().allow(''),
+  AWS_S3_AUTO_CREATE_BUCKET: Joi.string().valid('true', 'false').optional(),
 });

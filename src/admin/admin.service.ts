@@ -7,48 +7,6 @@ import { successResponse } from 'src/utils/response';
 export class AdminService {
   constructor(private prisma: PrismaService) {}
 
-  async getAllUsers(userpayload: any, roleFilter?: string) {
-    console.log(colors.green('Fetching users...'));
-
-    try {
-      let whereClause = {};
-      if (roleFilter) {
-        whereClause = { role: roleFilter };
-      }
-
-      const users = await this.prisma.user.findMany({
-        where: whereClause,
-      });
-
-      if (!users || users.length === 0) {
-        console.log(colors.red('No users found'));
-        return successResponse(200, true, 'No users found', 0);
-      }
-      console.log(colors.green(`Total of ${users.length} users found`));
-
-      const formattedUsers = users.map((user) => ({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      }));
-
-      return successResponse(
-        200,
-        true,
-        'Users fetched successfully',
-        users.length,
-        formattedUsers,
-      );
-    } catch (error) {
-      console.error(colors.red('Error fetching users:'));
-      return successResponse(500, false, 'Error fetching users');
-    }
-  }
-
   // This function fetches the dashboard data for the admin
   async getDashboard(userpayload: any) {
     console.log(colors.green('Fetching dashboard data...'));

@@ -31,6 +31,7 @@ async function bootstrap() {
       whitelist: true, // strips properties that are not in the DTO
       forbidNonWhitelisted: true, // throws error on unknown properties
       transform: true, // transforms payloads to DTO instances
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
@@ -71,6 +72,8 @@ async function bootstrap() {
       'Admin newsletter template management',
     )
     .addTag('Admin - Departments', 'Admin department management endpoints')
+    .addTag('Admin - Users', 'Admin user management and onboarding endpoints')
+    .addTag('Admin - Uploads', 'Admin file uploads (avatars, etc.)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

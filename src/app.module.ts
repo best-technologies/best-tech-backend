@@ -11,6 +11,7 @@ import { ContactUsModule } from './contact-us/contact-us.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { LoggerModule } from './common/logger/logger.module';
+import { StorageModule } from './common/storage/storage.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 @Module({
@@ -21,6 +22,7 @@ import { AppService } from './app.service';
       validationSchema,
     }),
     LoggerModule,
+    StorageModule,
     PrismaModule,
     IdentityModule,
     UsersModule,

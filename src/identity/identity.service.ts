@@ -165,6 +165,7 @@ export class IdentityService {
       lastName: user.lastName,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      displayPicture: user.displayPictureUrl ?? null,
     };
 
     console.log(colors.magenta('User signed in successfully'));

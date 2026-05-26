@@ -4,7 +4,6 @@ import { NewsletterPublicController } from './newsletter-public.controller';
 import { NewsletterTemplateController } from './newsletter-template.controller';
 import { NewsletterService } from './newsletter.service';
 import { NewsletterTemplateService } from './newsletter-template.service';
-import { CloudinaryService } from '../common/services/cloudinary.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LoggerModule } from '../common/logger/logger.module';
 import { ConfigModule } from '@nestjs/config';
@@ -16,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
     NewsletterPublicController,
     NewsletterTemplateController,
   ],
-  providers: [NewsletterService, NewsletterTemplateService, CloudinaryService],
+  providers: [NewsletterService, NewsletterTemplateService],
   exports: [NewsletterService, NewsletterTemplateService],
 })
 export class NewsletterModule {}

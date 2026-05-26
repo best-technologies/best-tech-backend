@@ -22,6 +22,9 @@ model User {
   role         Role      @default(user)
   isActive     Boolean   @default(true)
   departmentId String?
+  userType     UserType  @default(STAFF)
+  displayPictureUrl String?
+  displayPictureKey String?
   refreshToken String?
   otp          String?
   otpExpires   DateTime?
@@ -184,6 +187,15 @@ model Department {
   users       User[]
 
   @@map("departments")
+}
+
+enum UserType {
+  STAFF
+  CORPORATE
+  INTERN
+  IT
+  STUDENT
+  OTHER
 }
 
 enum Role {

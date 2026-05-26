@@ -11,15 +11,6 @@ export class AdminController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  @Get('users')
-  async getAllUsers(@Req() req: Request) {
-    // Accept role as query param: /admin/users?role=student|staff|admin
-    const role = req.query.role as string | undefined;
-    return await this.adminService.getAllUsers(req.user, role);
-  }
-
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
   @Get('dashboard')
   async getDashboard(@Req() req: Request) {
     return await this.adminService.getDashboard(req.user);

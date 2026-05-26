@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CloudinaryService } from '../common/services/cloudinary.service';
+import { StorageService } from '../common/storage/storage.service';
 import { CreateNewsletterTemplateDto } from './dto/create-newsletter-template.dto';
 import { UpdateNewsletterTemplateDto } from './dto/update-newsletter-template.dto';
 import { QueryNewsletterTemplateDto } from './dto/query-newsletter-template.dto';
@@ -24,7 +24,7 @@ type MulterFile = {
 export class NewsletterTemplateService {
   constructor(
     private prisma: PrismaService,
-    private cloudinaryService: CloudinaryService,
+    private storageService: StorageService,
     private logger: LoggerService,
   ) {}
 
@@ -59,14 +59,14 @@ export class NewsletterTemplateService {
 
         for (let i = 0; i < imageFiles.length; i++) {
           const imageFile = imageFiles[i];
-          const uploadResult = await this.cloudinaryService.uploadImage(
+          const uploadResult = await this.storageService.uploadImage(
             imageFile,
             'newsletter',
           );
 
           images.push({
-            publicId: uploadResult.publicId,
-            secureUrl: uploadResult.secureUrl,
+            publicId: uploadResult.key,
+            secureUrl: uploadResult.url,
             alt: `Newsletter image ${i + 1}`,
             order: i,
           });
@@ -409,14 +409,14 @@ export class NewsletterTemplateService {
       if (imageFile) {
         this.logger.log(colors.blue('Uploading new image to Cloudinary...'));
 
-        const uploadResult = await this.cloudinaryService.uploadImage(
+        const uploadResult = await this.storageService.uploadImage(
           imageFile,
           'newsletter',
         );
 
         images.push({
-          publicId: uploadResult.publicId,
-          secureUrl: uploadResult.secureUrl,
+          publicId: uploadResult.key,
+          secureUrl: uploadResult.url,
           alt: `Newsletter image ${images.length + 1}`,
           order: images.length,
         });
@@ -522,7 +522,7 @@ export class NewsletterTemplateService {
         const images = existingTemplate.images as any[];
         for (const image of images) {
           try {
-            await this.cloudinaryService.deleteImage(image.publicId);
+            await this.storageService.deleteImage(image.publicId);
             this.logger.log(
               colors.green(`Image ${image.publicId} deleted from Cloudinary`),
             );
