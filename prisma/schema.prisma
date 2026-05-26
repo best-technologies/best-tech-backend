@@ -20,6 +20,8 @@ model User {
   email        String    @unique
   password     String
   role         Role      @default(user)
+  isActive     Boolean   @default(true)
+  departmentId String?
   refreshToken String?
   otp          String?
   otpExpires   DateTime?
@@ -27,6 +29,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   // Relations
+  department           Department?          @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdServices      Service[]            @relation("ServiceCreator")
   createdCategories    Category[]
   createdSubcategories Subcategory[]
@@ -178,6 +181,7 @@ model Department {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  users       User[]
 
   @@map("departments")
 }

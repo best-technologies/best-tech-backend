@@ -19,21 +19,40 @@ export class DepartmentService {
     private logger: LoggerService,
   ) {}
 
-  private formatDepartment(department: {
-    id: string;
-    name: string;
-    description: string | null;
-    isActive: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }): DepartmentData {
+  private formatDepartment(
+    department: {
+      id: string;
+      name: string;
+      description: string | null;
+      isActive: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    users: Array<{ isActive: boolean }> = [],
+  ): DepartmentData {
+    const activeUsers = users.filter((user) => user.isActive).length;
+    const inactiveUsers = users.length - activeUsers;
+
     return {
       id: department.id,
       name: department.name,
       description: department.description,
       isActive: department.isActive,
+      totalUsers: users.length,
+      activeUsers,
+      inactiveUsers,
       createdAt: formatDate(department.createdAt),
       updatedAt: formatDate(department.updatedAt),
+    };
+  }
+
+  private getDepartmentInclude() {
+    return {
+      users: {
+        select: {
+          isActive: true,
+        },
+      },
     };
   }
 
@@ -96,10 +115,11 @@ export class DepartmentService {
     try {
       const departments = await this.prisma.department.findMany({
         orderBy: { createdAt: 'desc' },
+        include: this.getDepartmentInclude(),
       });
 
       const formattedData = departments.map((department) =>
-        this.formatDepartment(department),
+        this.formatDepartment(department, department.users),
       );
 
       return successResponse(
@@ -128,6 +148,7 @@ export class DepartmentService {
     try {
       const department = await this.prisma.department.findUnique({
         where: { id },
+        include: this.getDepartmentInclude(),
       });
 
       if (!department) {
@@ -139,7 +160,7 @@ export class DepartmentService {
         true,
         'Department fetched successfully',
         1,
-        this.formatDepartment(department),
+        this.formatDepartment(department, department.users),
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -189,6 +210,7 @@ export class DepartmentService {
       const department = await this.prisma.department.update({
         where: { id },
         data: updateDepartmentDto,
+        include: this.getDepartmentInclude(),
       });
 
       return successResponse(
@@ -196,7 +218,7 @@ export class DepartmentService {
         true,
         'Department updated successfully',
         1,
-        this.formatDepartment(department),
+        this.formatDepartment(department, department.users),
       );
     } catch (error: unknown) {
       this.logger.error(

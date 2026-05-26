@@ -16,6 +16,15 @@ export class DepartmentDataDto {
   @ApiProperty({ example: true })
   isActive: boolean;
 
+  @ApiProperty({ example: 12 })
+  totalUsers: number;
+
+  @ApiProperty({ example: 10 })
+  activeUsers: number;
+
+  @ApiProperty({ example: 2 })
+  inactiveUsers: number;
+
   @ApiProperty({ example: '26 May 2026' })
   createdAt: string;
 
