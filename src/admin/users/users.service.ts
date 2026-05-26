@@ -308,6 +308,39 @@ export class AdminUsersService {
     }
   }
 
+  async getProfile(userId: string): Promise<ApiResponse<UserData>> {
+    this.logger.log(
+      colors.green(`Fetching profile for user ${userId}...`),
+      'AdminUsersService',
+    );
+
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        include: this.getUserInclude(),
+      });
+
+      if (!user) {
+        return failureResponse(404, 'Profile not found', false);
+      }
+
+      return successResponse(
+        200,
+        true,
+        'Profile fetched successfully',
+        1,
+        this.formatUser(user),
+      );
+    } catch (error: unknown) {
+      this.logger.error(
+        'Error fetching profile',
+        this.getErrorTrace(error),
+        'AdminUsersService',
+      );
+      return failureResponse(500, 'Failed to fetch profile', false);
+    }
+  }
+
   async create(
     dto: CreateAdminUserDto,
   ): Promise<ApiResponse<UserData>> {

@@ -7,10 +7,11 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { JwtAuthGuard } from '../../identity/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guards';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -19,6 +20,7 @@ import { QueryUsersDashboardDto } from './dto/query-users-dashboard.dto';
 import { CreateAdminUserDto } from './dto/create-user.dto';
 import { UpdateAdminUserDto } from './dto/update-user.dto';
 import { UsersControllerDocs } from './doc/user.doc';
+import { failureResponse } from '../../utils/response';
 
 @UsersControllerDocs()
 @Controller('admin/users')
@@ -33,6 +35,24 @@ export class AdminUsersController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.adminUsersService.getDashboard(query);
+    res.status(result.statusCode);
+    return result;
+  }
+
+  @Get('profile')
+  async getProfile(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const authUser = req.user as { userId?: string; _id?: string } | undefined;
+    const userId = authUser?.userId ?? authUser?._id;
+
+    if (!userId) {
+      res.status(401);
+      return failureResponse(401, 'Unauthorized', false);
+    }
+
+    const result = await this.adminUsersService.getProfile(userId);
     res.status(result.statusCode);
     return result;
   }
