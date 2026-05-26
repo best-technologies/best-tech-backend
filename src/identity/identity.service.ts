@@ -57,34 +57,6 @@ export class IdentityService {
         }
       });
 
-      // Create wallets for the new user
-      try {
-        await this.prisma.$transaction([
-          this.prisma.smsWallet.create({
-            data: {
-              kind: 'user',
-              provider: 'bulksmsnigeria',
-              userId: newUser.id,
-              currentBalance: 0,
-              lastAmountSpent: 0,
-            }
-          }),
-          this.prisma.emailWallet.create({
-            data: {
-              kind: 'user',
-              provider: 'gmail_smtp',
-              userId: newUser.id,
-              currentBalance: 0,
-              lastAmountSpent: 0,
-            }
-          })
-        ]);
-        console.log(colors.green('User wallets created successfully'));
-      } catch (walletError) {
-        console.error(colors.red('Error creating user wallets:'), walletError);
-        // Don't fail user creation if wallet creation fails
-      }
-
       // Send welcome email to the new user
       try {
         console.log(colors.blue(`Sending welcome email to ${email}`));

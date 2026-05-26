@@ -40,7 +40,7 @@ async function bootstrap() {
   // Swagger Documentation Setup
   const config = new DocumentBuilder()
     .setTitle('B-Tech Backend API')
-    .setDescription('A comprehensive NestJS backend API for B-Tech services')
+    .setDescription('NestJS backend API for B-Tech authentication, services, contact, and newsletter management')
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -51,15 +51,16 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'JWT-auth', // This name here is important for references
+      'JWT-auth',
     )
+    .addTag('Health', 'Application health check endpoints')
     .addTag('Authentication', 'User authentication and authorization endpoints')
-    .addTag('Users', 'User management endpoints')
-    .addTag('Services', 'Service management endpoints')
-    .addTag('Categories', 'Category management endpoints')
-    .addTag('Admin', 'Admin-specific endpoints')
+    .addTag('Users', 'User dashboard and profile endpoints')
+    .addTag('Services', 'Service, category, and subcategory management endpoints')
     .addTag('Contact Us', 'Contact us form endpoints')
-    .addTag('Newsletter', 'Newsletter subscription endpoints')
+    .addTag('Newsletter - Public', 'Public newsletter subscription endpoints')
+    .addTag('Newsletter - Admin', 'Admin newsletter subscription management')
+    .addTag('Newsletter Templates - Admin', 'Admin newsletter template management')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

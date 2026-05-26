@@ -3,9 +3,6 @@ export default () => ({
   database: {
     url: process.env.DATABASE_URL,
   },
-  bulksms: {
-    token: process.env.BULKSMSTOKEN,
-  },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
