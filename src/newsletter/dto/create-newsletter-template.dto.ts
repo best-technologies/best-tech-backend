@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsEnum, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
-import { NewsletterStatus } from '@prisma/client';
+import { NewsletterStatus } from '../../prisma/client';
 
 export class NewsletterImageDto {
   @ApiProperty({

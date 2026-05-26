@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsInt, Min, Max, IsEnum } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { NewsletterStatus } from '@prisma/client';
+import { NewsletterStatus } from '../../prisma/client';
 
 export class QueryNewsletterTemplateDto {
   @ApiPropertyOptional({

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsString, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ContactSubject, ProposedBudget, ProjectTimeline, ContactStatus } from '@prisma/client';
+import { ContactSubject, ProposedBudget, ProjectTimeline, ContactStatus } from '../../prisma/client';
 
 export class QueryContactUsDto {
   @ApiProperty({

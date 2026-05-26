@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional, IsEnum, IsNotEmpty } from 'class-validator';
-import { ContactSubject, ProposedBudget, ProjectTimeline, ContactUsProjectType } from '@prisma/client';
+import { ContactSubject, ProposedBudget, ProjectTimeline, ContactUsProjectType } from '../../prisma/client';
 import { Transform } from 'class-transformer';
 
 export class CreateContactUsDto {
