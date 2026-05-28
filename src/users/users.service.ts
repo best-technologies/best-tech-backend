@@ -19,6 +19,7 @@ import {
   USER_PROFILE_INCLUDE,
 } from './helpers/profile-formatter';
 import { applyProfileUpdates } from './helpers/profile-update.helpers';
+import { calculateProfileCompletion } from './helpers/profile-completion.helper';
 
 const ALLOWED_DISPLAY_PICTURE_MIMES = new Set([
   'image/jpeg',
@@ -293,15 +294,12 @@ export class UsersService {
     try {
       this.logger.log('User ID: ' + userId, 'UsersService');
 
+      await this.ensureUserProfile(userId);
+
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          role: true,
-          createdAt: true,
+        include: {
+          ...USER_PROFILE_INCLUDE,
           staffProfile: {
             select: {
               id: true,
@@ -321,6 +319,8 @@ export class UsersService {
         this.logger.error('User not found');
         return failureResponse(404, 'User not found');
       }
+
+      const profileCompletion = calculateProfileCompletion(user);
 
       const serviceStats = await this.prisma.service.aggregate({
         where: { userId: userId },
@@ -357,6 +357,7 @@ export class UsersService {
           },
           contacts: contactStats,
         },
+        profileCompletion,
       };
 
       this.logger.log('User dashboard retrieved successfully');
