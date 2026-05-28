@@ -122,16 +122,6 @@ export class UpdateUserProfileAddressDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsString()
-  addressProofUrl?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  addressProofKey?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
   @IsBoolean()
   isPrimary?: boolean;
 }
@@ -255,11 +245,6 @@ export class UpdateUserProfileEmploymentDto {
   @IsString()
   jobTitle?: string | null;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  departmentId?: string | null;
-
   @ApiPropertyOptional({ enum: EmploymentType })
   @IsOptional()
   @IsEnum(EmploymentType)
@@ -300,54 +285,110 @@ export class UpdateUserProfilePersonalDetailsDto {
 }
 
 export class UpdateUserProfileDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description:
+      'Partial basic details — only include fields you want to change',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UpdateUserProfileBasicDetailsDto)
   basicDetails?: UpdateUserProfileBasicDetailsDto;
 
-  @ApiPropertyOptional({ type: [UpdateUserProfileAddressDto] })
+  @ApiPropertyOptional({
+    type: [UpdateUserProfileAddressDto],
+    description:
+      'Per-record upsert: include id to update, omit id to create. Does not replace all addresses.',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateUserProfileAddressDto)
   addresses?: UpdateUserProfileAddressDto[];
 
-  @ApiPropertyOptional({ type: [UpdateUserProfileBankAccountDto] })
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'IDs of addresses to delete',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  addressDeletes?: string[];
+
+  @ApiPropertyOptional({
+    type: [UpdateUserProfileBankAccountDto],
+    description: 'Per-record upsert for bank accounts',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateUserProfileBankAccountDto)
   bankAccounts?: UpdateUserProfileBankAccountDto[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  bankAccountDeletes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Partial medical details — only changed fields',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UpdateUserProfileMedicalDetailsDto)
   medicalDetails?: UpdateUserProfileMedicalDetailsDto;
 
-  @ApiPropertyOptional({ type: [UpdateUserProfileContactDto] })
+  @ApiPropertyOptional({
+    type: [UpdateUserProfileContactDto],
+    description: 'Per-record upsert for emergency contacts',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateUserProfileContactDto)
   emergencyContacts?: UpdateUserProfileContactDto[];
 
-  @ApiPropertyOptional({ type: [UpdateUserProfileContactDto] })
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  emergencyContactDeletes?: string[];
+
+  @ApiPropertyOptional({
+    type: [UpdateUserProfileContactDto],
+    description: 'Per-record upsert for next of kin',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateUserProfileContactDto)
   nextOfKin?: UpdateUserProfileContactDto[];
 
-  @ApiPropertyOptional({ type: [UpdateUserProfileEmploymentDto] })
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  nextOfKinDeletes?: string[];
+
+  @ApiPropertyOptional({
+    type: [UpdateUserProfileEmploymentDto],
+    description: 'Per-record upsert for employment (department is read-only)',
+  })
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateUserProfileEmploymentDto)
   employments?: UpdateUserProfileEmploymentDto[];
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  employmentDeletes?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Partial personal details — only changed fields',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => UpdateUserProfilePersonalDetailsDto)

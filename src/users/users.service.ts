@@ -1,5 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../common/storage/storage.service';
 import {
   type ApiResponse,
   successResponse,
@@ -13,12 +18,22 @@ import {
   formatUserProfile,
   USER_PROFILE_INCLUDE,
 } from './helpers/profile-formatter';
+import { applyProfileUpdates } from './helpers/profile-update.helpers';
+
+const ALLOWED_DISPLAY_PICTURE_MIMES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+]);
+
+const MAX_DISPLAY_PICTURE_BYTES = 5 * 1024 * 1024;
 
 @Injectable()
 export class UsersService {
   constructor(
     private prisma: PrismaService,
     private logger: LoggerService,
+    private readonly storageService: StorageService,
   ) {}
 
   private resolveUserId(authUser: JwtAuthUser | undefined): string | null {
@@ -31,6 +46,22 @@ export class UsersService {
       update: {},
       create: { userId },
     });
+  }
+
+  private async fetchProfileResponse(
+    userId: string,
+    message: string,
+  ): Promise<ApiResponse<UserProfileData>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: USER_PROFILE_INCLUDE,
+    });
+
+    if (!user) {
+      return failureResponse(404, 'Profile not found', false);
+    }
+
+    return successResponse(200, true, message, 1, formatUserProfile(user));
   }
 
   async getUserProfile(
@@ -84,225 +115,167 @@ export class UsersService {
       const profile = await this.ensureUserProfile(userId);
 
       await this.prisma.$transaction(async (tx) => {
-        if (dto.basicDetails) {
-          const { firstName, lastName, ...profileFields } = dto.basicDetails;
-
-          if (firstName || lastName) {
-            await tx.user.update({
-              where: { id: userId },
-              data: {
-                ...(firstName ? { firstName } : {}),
-                ...(lastName ? { lastName } : {}),
-              },
-            });
-          }
-
-          await tx.userProfile.update({
-            where: { id: profile.id },
-            data: {
-              ...(profileFields.preferredName !== undefined
-                ? { preferredName: profileFields.preferredName }
-                : {}),
-              ...(profileFields.personalEmail !== undefined
-                ? { personalEmail: profileFields.personalEmail }
-                : {}),
-              ...(profileFields.dateOfBirth !== undefined
-                ? {
-                    dateOfBirth: profileFields.dateOfBirth
-                      ? new Date(profileFields.dateOfBirth)
-                      : null,
-                  }
-                : {}),
-              ...(profileFields.gender !== undefined
-                ? { gender: profileFields.gender }
-                : {}),
-              ...(profileFields.phoneNumber !== undefined
-                ? { phoneNumber: profileFields.phoneNumber }
-                : {}),
-              ...(profileFields.secondaryPhoneNumber !== undefined
-                ? { secondaryPhoneNumber: profileFields.secondaryPhoneNumber }
-                : {}),
-              ...(profileFields.maritalStatus !== undefined
-                ? { maritalStatus: profileFields.maritalStatus }
-                : {}),
-              ...(profileFields.nationality !== undefined
-                ? { nationality: profileFields.nationality }
-                : {}),
-            },
-          });
-        }
-
-        if (dto.staffId !== undefined) {
-          await tx.userProfile.update({
-            where: { id: profile.id },
-            data: { staffId: dto.staffId },
-          });
-        }
-
-        if (dto.medicalDetails) {
-          await tx.userProfile.update({
-            where: { id: profile.id },
-            data: {
-              ...(dto.medicalDetails.bloodGroup !== undefined
-                ? { bloodGroup: dto.medicalDetails.bloodGroup }
-                : {}),
-              ...(dto.medicalDetails.knownMedicalConditions !== undefined
-                ? {
-                    knownMedicalConditions:
-                      dto.medicalDetails.knownMedicalConditions,
-                  }
-                : {}),
-              ...(dto.medicalDetails.allergies !== undefined
-                ? { allergies: dto.medicalDetails.allergies }
-                : {}),
-            },
-          });
-        }
-
-        if (dto.personalDetails) {
-          await tx.userProfile.update({
-            where: { id: profile.id },
-            data: {
-              ...(dto.personalDetails.funFact !== undefined
-                ? { funFact: dto.personalDetails.funFact }
-                : {}),
-              ...(dto.personalDetails.hobbies !== undefined
-                ? { hobbies: dto.personalDetails.hobbies }
-                : {}),
-              ...(dto.personalDetails.supportNeeded !== undefined
-                ? { supportNeeded: dto.personalDetails.supportNeeded }
-                : {}),
-            },
-          });
-        }
-
-        if (dto.addresses) {
-          await tx.userAddress.deleteMany({ where: { userProfileId: profile.id } });
-          if (dto.addresses.length > 0) {
-            await tx.userAddress.createMany({
-              data: dto.addresses.map((address) => ({
-                userProfileId: profile.id,
-                addressType: address.addressType ?? 'CURRENT',
-                state: address.state ?? null,
-                city: address.city ?? null,
-                closestLandmark: address.closestLandmark ?? null,
-                fullAddress: address.fullAddress ?? null,
-                postalCode: address.postalCode ?? null,
-                country: address.country ?? null,
-                addressProofType: address.addressProofType ?? null,
-                addressProofUrl: address.addressProofUrl ?? null,
-                addressProofKey: address.addressProofKey ?? null,
-                isPrimary: address.isPrimary ?? false,
-              })),
-            });
-          }
-        }
-
-        if (dto.bankAccounts) {
-          await tx.userBankAccount.deleteMany({
-            where: { userProfileId: profile.id },
-          });
-          if (dto.bankAccounts.length > 0) {
-            await tx.userBankAccount.createMany({
-              data: dto.bankAccounts.map((account) => ({
-                userProfileId: profile.id,
-                bankName: account.bankName ?? null,
-                accountNumber: account.accountNumber ?? null,
-                accountName: account.accountName ?? null,
-                isPrimary: account.isPrimary ?? false,
-              })),
-            });
-          }
-        }
-
-        if (dto.emergencyContacts) {
-          await tx.userEmergencyContact.deleteMany({
-            where: { userProfileId: profile.id },
-          });
-          if (dto.emergencyContacts.length > 0) {
-            await tx.userEmergencyContact.createMany({
-              data: dto.emergencyContacts.map((contact) => ({
-                userProfileId: profile.id,
-                fullName: contact.fullName ?? null,
-                relationship: contact.relationship ?? null,
-                phoneNumber: contact.phoneNumber ?? null,
-                email: contact.email ?? null,
-                state: contact.state ?? null,
-                city: contact.city ?? null,
-                closestLandmark: contact.closestLandmark ?? null,
-                fullAddress: contact.fullAddress ?? null,
-                postalCode: contact.postalCode ?? null,
-                country: contact.country ?? null,
-                isPrimary: contact.isPrimary ?? false,
-              })),
-            });
-          }
-        }
-
-        if (dto.nextOfKin) {
-          await tx.userNextOfKin.deleteMany({
-            where: { userProfileId: profile.id },
-          });
-          if (dto.nextOfKin.length > 0) {
-            await tx.userNextOfKin.createMany({
-              data: dto.nextOfKin.map((contact) => ({
-                userProfileId: profile.id,
-                fullName: contact.fullName ?? null,
-                relationship: contact.relationship ?? null,
-                phoneNumber: contact.phoneNumber ?? null,
-                email: contact.email ?? null,
-                state: contact.state ?? null,
-                city: contact.city ?? null,
-                closestLandmark: contact.closestLandmark ?? null,
-                fullAddress: contact.fullAddress ?? null,
-                postalCode: contact.postalCode ?? null,
-                country: contact.country ?? null,
-                isPrimary: contact.isPrimary ?? false,
-              })),
-            });
-          }
-        }
-
-        if (dto.employments) {
-          await tx.userEmployment.deleteMany({
-            where: { userProfileId: profile.id },
-          });
-          if (dto.employments.length > 0) {
-            await tx.userEmployment.createMany({
-              data: dto.employments.map((employment) => ({
-                userProfileId: profile.id,
-                jobTitle: employment.jobTitle ?? null,
-                departmentId: employment.departmentId ?? null,
-                employmentType: employment.employmentType ?? null,
-                dateOfJoining: employment.dateOfJoining
-                  ? new Date(employment.dateOfJoining)
-                  : null,
-                workLocation: employment.workLocation ?? null,
-                isPrimary: employment.isPrimary ?? false,
-              })),
-            });
-          }
-        }
+        await applyProfileUpdates(tx, userId, profile.id, dto);
       });
 
-      const user = await this.prisma.user.findUnique({
+      return this.fetchProfileResponse(userId, 'Profile updated successfully');
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      return failureResponse(500, 'Error updating user profile', false);
+    }
+  }
+
+  async updateDisplayPicture(
+    authUser: JwtAuthUser | undefined,
+    file: Express.Multer.File | undefined,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log('Updating user display picture...', 'UsersService');
+
+    const userId = this.resolveUserId(authUser);
+
+    if (!userId) {
+      return failureResponse(401, 'Unauthorized', false);
+    }
+
+    if (!file?.buffer) {
+      throw new BadRequestException('Display picture file is required');
+    }
+
+    const mimetype = (file.mimetype || '').toLowerCase();
+    if (!ALLOWED_DISPLAY_PICTURE_MIMES.has(mimetype)) {
+      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG');
+    }
+
+    if (file.size > MAX_DISPLAY_PICTURE_BYTES) {
+      throw new BadRequestException('File is too large. Maximum size is 5MB');
+    }
+
+    try {
+      const existing = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: USER_PROFILE_INCLUDE,
+        select: { displayPictureKey: true },
       });
 
-      if (!user) {
+      if (!existing) {
         return failureResponse(404, 'Profile not found', false);
       }
 
-      return successResponse(
-        200,
-        true,
-        'Profile updated successfully',
-        1,
-        formatUserProfile(user),
+      const stored = await this.storageService.uploadImage(
+        { buffer: file.buffer, mimetype },
+        'users/avatars',
       );
-    } catch {
-      return failureResponse(500, 'Error updating user profile', false);
+
+      if (existing.displayPictureKey) {
+        try {
+          await this.storageService.deleteImage(existing.displayPictureKey);
+        } catch {
+          this.logger.warn(
+            `Could not delete old display picture: ${existing.displayPictureKey}`,
+            'UsersService',
+          );
+        }
+      }
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          displayPictureUrl: stored.url,
+          displayPictureKey: stored.key,
+        },
+      });
+
+      await this.ensureUserProfile(userId);
+
+      return this.fetchProfileResponse(
+        userId,
+        'Display picture updated successfully',
+      );
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      return failureResponse(500, 'Error updating display picture', false);
+    }
+  }
+
+  async updateAddressProof(
+    authUser: JwtAuthUser | undefined,
+    addressId: string,
+    file: Express.Multer.File | undefined,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log('Updating address proof...', 'UsersService');
+
+    const userId = this.resolveUserId(authUser);
+
+    if (!userId) {
+      return failureResponse(401, 'Unauthorized', false);
+    }
+
+    if (!file?.buffer) {
+      throw new BadRequestException('Address proof file is required');
+    }
+
+    const mimetype = (file.mimetype || '').toLowerCase();
+    if (!ALLOWED_DISPLAY_PICTURE_MIMES.has(mimetype)) {
+      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG');
+    }
+
+    if (file.size > MAX_DISPLAY_PICTURE_BYTES) {
+      throw new BadRequestException('File is too large. Maximum size is 5MB');
+    }
+
+    try {
+      const profile = await this.ensureUserProfile(userId);
+
+      const address = await this.prisma.userAddress.findFirst({
+        where: { id: addressId, userProfileId: profile.id },
+      });
+
+      if (!address) {
+        throw new NotFoundException('Address not found');
+      }
+
+      const stored = await this.storageService.uploadImage(
+        { buffer: file.buffer, mimetype },
+        'users/address-proofs',
+      );
+
+      if (address.addressProofKey) {
+        try {
+          await this.storageService.deleteImage(address.addressProofKey);
+        } catch {
+          this.logger.warn(
+            `Could not delete old address proof: ${address.addressProofKey}`,
+            'UsersService',
+          );
+        }
+      }
+
+      await this.prisma.userAddress.update({
+        where: { id: addressId },
+        data: {
+          addressProofUrl: stored.url,
+          addressProofKey: stored.key,
+        },
+      });
+
+      return this.fetchProfileResponse(
+        userId,
+        'Address proof updated successfully',
+      );
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      return failureResponse(500, 'Error updating address proof', false);
     }
   }
 

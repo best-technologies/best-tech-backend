@@ -1,5 +1,23 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Put,
+  Req,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { ApiResponse } from '../utils/response';
 import type { AuthenticatedRequest } from '../identity/types/authenticated-request.interface';
 import { UsersService } from './users.service';
@@ -31,11 +49,60 @@ export class UsersController {
   }
 
   @Patch('profile')
-  @ApiOperation({ summary: 'Update authenticated user profile' })
+  @ApiOperation({
+    summary:
+      'Partially update authenticated user profile (only send changed fields/records)',
+  })
   updateProfile(
     @Req() req: AuthenticatedRequest,
     @Body() dto: UpdateUserProfileDto,
   ): Promise<ApiResponse<UserProfileData>> {
     return this.usersService.updateUserProfile(req.user, dto);
+  }
+
+  @Put('profile/display-picture')
+  @ApiOperation({
+    summary: 'Upload or replace authenticated user display picture',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['displayPicture'],
+      properties: {
+        displayPicture: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('displayPicture'))
+  updateDisplayPicture(
+    @Req() req: AuthenticatedRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ApiResponse<UserProfileData>> {
+    return this.usersService.updateDisplayPicture(req.user, file);
+  }
+
+  @Put('profile/addresses/:addressId/address-proof')
+  @ApiOperation({ summary: 'Upload or replace address proof document' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['addressProof'],
+      properties: {
+        addressProof: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('addressProof'))
+  updateAddressProof(
+    @Req() req: AuthenticatedRequest,
+    @Param('addressId') addressId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ApiResponse<UserProfileData>> {
+    return this.usersService.updateAddressProof(req.user, addressId, file);
   }
 }
