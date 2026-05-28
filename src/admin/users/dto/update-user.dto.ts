@@ -12,7 +12,8 @@ export class UpdateAdminUserDto extends PartialType(
   OmitType(CreateAdminUserDto, ['password'] as const),
 ) {
   @ApiPropertyOptional({
-    description: 'Set to clear profile picture (removes stored object when key is known)',
+    description:
+      'Set to clear profile picture (removes stored object when key is known)',
   })
   @IsOptional()
   @IsBoolean()

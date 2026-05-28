@@ -23,12 +23,6 @@ import { SignInDto } from './dto/sign-in.dto';
 import { JwtAuthGuard, JwtRefreshGuard } from './guards/jwt-auth.guard';
 import { successResponse } from 'src/utils/response';
 
-declare module 'express' {
-  export interface Request {
-    user?: { _id: string };
-  }
-}
-
 @ApiTags('Authentication')
 @Controller('identity')
 export class IdentityController {
@@ -126,8 +120,7 @@ export class IdentityController {
   @Post('signout')
   @HttpCode(HttpStatus.OK)
   async signout(@Req() req: Request) {
-    const user = req.user as { _id: string };
-    await this.identityService.signout(user._id);
+    await this.identityService.signout(req.user!.userId);
     return successResponse(200, true, 'User signed out successfully');
   }
 
@@ -151,7 +144,6 @@ export class IdentityController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(@Req() req: Request) {
-    const user = req.user as { _id: string };
     const authorizationHeader = req.get('Authorization');
     const refreshToken = authorizationHeader
       ? authorizationHeader.split(' ')[1]
@@ -162,7 +154,7 @@ export class IdentityController {
     }
 
     const tokens = await this.identityService.refreshTokens(
-      user._id,
+      req.user!.userId,
       refreshToken,
     );
 

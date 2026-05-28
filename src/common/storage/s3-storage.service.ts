@@ -35,8 +35,7 @@ export class S3StorageService implements OnModuleInit {
     ).toLowerCase();
     if (provider !== 'aws-s3') return;
 
-    this.region =
-      this.config.get<string>('storage.aws.region') || 'af-south-1';
+    this.region = this.config.get<string>('storage.aws.region') || 'af-south-1';
     this.bucket = this.config.get<string>('storage.aws.bucket') || '';
     const accessKeyId = this.config.get<string>('storage.aws.accessKeyId');
     const secretAccessKey = this.config.get<string>(
@@ -73,9 +72,7 @@ export class S3StorageService implements OnModuleInit {
 
   private async ensureBucketExistsAndPublic() {
     try {
-      await this.client.send(
-        new HeadBucketCommand({ Bucket: this.bucket }),
-      );
+      await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
       this.logger.log(colors.green(`S3 bucket exists: ${this.bucket}`));
     } catch (_err: unknown) {
       this.logger.log(
@@ -103,7 +100,9 @@ export class S3StorageService implements OnModuleInit {
         const name =
           createErr instanceof Error ? createErr.name : String(createErr);
         if (name === 'BucketAlreadyOwnedByYou') {
-          this.logger.log(colors.green('S3 bucket already owned by this account'));
+          this.logger.log(
+            colors.green('S3 bucket already owned by this account'),
+          );
         } else {
           throw createErr;
         }

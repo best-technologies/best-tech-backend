@@ -3,7 +3,10 @@ import {
   EmailSendResult,
   OutboundEmail,
 } from './email.types';
-import { canUseGmailProvider, sendViaGmail } from './email-providers/gmail.provider';
+import {
+  canUseGmailProvider,
+  sendViaGmail,
+} from './email-providers/gmail.provider';
 import {
   canUseResendProvider,
   sendViaResend,

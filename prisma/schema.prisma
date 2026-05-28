@@ -40,8 +40,134 @@ model User {
   staffProfile         Staff?
   studentProfile       Student?
   Service              Service[]
+  profile              UserProfile?
 
   @@map("users")
+}
+
+model UserProfile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth            DateTime?
+  gender                 Gender?
+  personalEmail          String?
+  phoneNumber            String?
+  secondaryPhoneNumber   String?
+  maritalStatus          MaritalStatus?
+  preferredName          String?
+  nationality            String?
+  bloodGroup             String?
+  knownMedicalConditions String[] @default([])
+  allergies              String[] @default([])
+  funFact                String?
+  hobbies                String[] @default([])
+  supportNeeded          String?
+  staffId                String?  @unique
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  addresses         UserAddress[]
+  bankAccounts      UserBankAccount[]
+  emergencyContacts UserEmergencyContact[]
+  nextOfKin         UserNextOfKin[]
+  employments       UserEmployment[]
+
+  @@map("user_profiles")
+}
+
+model UserAddress {
+  id                String             @id @default(cuid())
+  userProfileId     String
+  userProfile       UserProfile        @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  addressType       AddressType        @default(CURRENT)
+  state             String?
+  city              String?
+  closestLandmark   String?
+  fullAddress       String?
+  postalCode        String?
+  country           String?
+  addressProofType  AddressProofType?
+  addressProofUrl   String?
+  addressProofKey   String?
+  isPrimary         Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@map("user_addresses")
+}
+
+model UserBankAccount {
+  id              String      @id @default(cuid())
+  userProfileId   String
+  userProfile     UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  bankName        String?
+  accountNumber   String?
+  accountName     String?
+  isPrimary       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("user_bank_accounts")
+}
+
+model UserEmergencyContact {
+  id              String      @id @default(cuid())
+  userProfileId   String
+  userProfile     UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  fullName        String?
+  relationship    String?
+  phoneNumber     String?
+  email           String?
+  state           String?
+  city            String?
+  closestLandmark String?
+  fullAddress     String?
+  postalCode      String?
+  country         String?
+  isPrimary       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("user_emergency_contacts")
+}
+
+model UserNextOfKin {
+  id              String      @id @default(cuid())
+  userProfileId   String
+  userProfile     UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  fullName        String?
+  relationship    String?
+  phoneNumber     String?
+  email           String?
+  state           String?
+  city            String?
+  closestLandmark String?
+  fullAddress     String?
+  postalCode      String?
+  country         String?
+  isPrimary       Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@map("user_next_of_kin")
+}
+
+model UserEmployment {
+  id              String          @id @default(cuid())
+  userProfileId   String
+  userProfile     UserProfile     @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  jobTitle        String?
+  departmentId    String?
+  department      Department?     @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  employmentType  EmploymentType?
+  dateOfJoining   DateTime?
+  workLocation    WorkLocation?
+  isPrimary       Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@map("user_employments")
 }
 
 model Staff {
@@ -185,6 +311,7 @@ model Department {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   users       User[]
+  employments UserEmployment[]
 
   @@map("departments")
 }
@@ -277,4 +404,50 @@ enum NewsletterStatus {
   scheduled
   sent
   cancelled
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
+  OTHER
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  FREELANCE
+  TEMPORARY
+}
+
+enum WorkLocation {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum AddressType {
+  CURRENT
+  PERMANENT
+  OTHER
+}
+
+enum AddressProofType {
+  ELECTRICITY_BILL
+  BANK_STATEMENT
+  UTILITY_BILL
+  TENANCY_AGREEMENT
+  OTHER
 }

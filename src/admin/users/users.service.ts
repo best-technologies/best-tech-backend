@@ -19,6 +19,11 @@ import type {
   UsersAnalytics,
   UserDepartmentCount,
 } from './types/user.types';
+import {
+  formatUserProfile,
+  USER_PROFILE_INCLUDE,
+} from '../../users/helpers/profile-formatter';
+import type { UserProfileData } from '../../users/types/user-profile.types';
 import * as colors from 'colors';
 
 const SORT_FIELDS = [
@@ -43,21 +48,19 @@ export class AdminUsersService {
     return error instanceof Error ? error.stack : String(error);
   }
 
-  private formatUser(
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      role: Role;
-      userType: UserType;
-      isActive: boolean;
-      displayPictureUrl: string | null;
-      createdAt: Date;
-      updatedAt: Date;
-      department: { id: string; name: string } | null;
-    },
-  ): UserData {
+  private formatUser(user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: Role;
+    userType: UserType;
+    isActive: boolean;
+    displayPictureUrl: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    department: { id: string; name: string } | null;
+  }): UserData {
     return {
       id: user.id,
       firstName: user.firstName,
@@ -81,9 +84,7 @@ export class AdminUsersService {
     };
   }
 
-  private buildWhere(
-    query: QueryUsersDashboardDto,
-  ): Prisma.UserWhereInput {
+  private buildWhere(query: QueryUsersDashboardDto): Prisma.UserWhereInput {
     const where: Prisma.UserWhereInput = {};
 
     if (query.search?.trim()) {
@@ -219,7 +220,9 @@ export class AdminUsersService {
       const limit = query.limit ?? 10;
       const sortOrder = query.sortOrder ?? 'desc';
       const rawSortBy = query.sortBy ?? 'createdAt';
-      const sortBy = SORT_FIELDS.includes(rawSortBy as (typeof SORT_FIELDS)[number])
+      const sortBy = SORT_FIELDS.includes(
+        rawSortBy as (typeof SORT_FIELDS)[number],
+      )
         ? rawSortBy
         : 'createdAt';
 
@@ -308,16 +311,22 @@ export class AdminUsersService {
     }
   }
 
-  async getProfile(userId: string): Promise<ApiResponse<UserData>> {
+  async getProfile(userId: string): Promise<ApiResponse<UserProfileData>> {
     this.logger.log(
       colors.green(`Fetching profile for user ${userId}...`),
       'AdminUsersService',
     );
 
     try {
+      await this.prisma.userProfile.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+      });
+
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        include: this.getUserInclude(),
+        include: USER_PROFILE_INCLUDE,
       });
 
       if (!user) {
@@ -329,7 +338,7 @@ export class AdminUsersService {
         true,
         'Profile fetched successfully',
         1,
-        this.formatUser(user),
+        formatUserProfile(user),
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -341,10 +350,11 @@ export class AdminUsersService {
     }
   }
 
-  async create(
-    dto: CreateAdminUserDto,
-  ): Promise<ApiResponse<UserData>> {
-    this.logger.log(colors.green('Creating user (admin)...'), 'AdminUsersService');
+  async create(dto: CreateAdminUserDto): Promise<ApiResponse<UserData>> {
+    this.logger.log(
+      colors.green('Creating user (admin)...'),
+      'AdminUsersService',
+    );
 
     try {
       const email = dto.email.trim().toLowerCase();
@@ -353,7 +363,11 @@ export class AdminUsersService {
         where: { email },
       });
       if (existing) {
-        return failureResponse(409, 'User with this email already exists', false);
+        return failureResponse(
+          409,
+          'User with this email already exists',
+          false,
+        );
       }
 
       if (dto.departmentId) {
@@ -433,8 +447,7 @@ export class AdminUsersService {
 
       if (dto.firstName !== undefined) data.firstName = dto.firstName.trim();
       if (dto.lastName !== undefined) data.lastName = dto.lastName.trim();
-      if (dto.email !== undefined)
-        data.email = dto.email.trim().toLowerCase();
+      if (dto.email !== undefined) data.email = dto.email.trim().toLowerCase();
       if (dto.role !== undefined) data.role = dto.role;
       if (dto.userType !== undefined) data.userType = dto.userType;
       if (dto.isActive !== undefined) data.isActive = dto.isActive;
