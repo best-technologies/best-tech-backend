@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { Prisma, type Role, type UserType } from '../../prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -25,8 +29,23 @@ import {
   USER_PROFILE_INCLUDE,
 } from '../../users/helpers/profile-formatter';
 import { calculateProfileCompletion } from '../../users/helpers/profile-completion.helper';
+import { applyProfileUpdates } from '../../users/helpers/profile-update.helpers';
+import { UpdateUserProfileDto } from '../../users/dto/update-user-profile.dto';
+import {
+  AdminProfileImageType,
+  UploadUserProfileImageDto,
+} from './dto/upload-user-profile-image.dto';
 import type { UserProfileData } from '../../users/types/user-profile.types';
 import * as colors from 'colors';
+
+const ALLOWED_PROFILE_IMAGE_MIMES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+]);
+
+const MAX_PROFILE_IMAGE_BYTES = 5 * 1024 * 1024;
 
 const SORT_FIELDS = [
   'createdAt',
@@ -582,6 +601,260 @@ export class AdminUsersService {
         'AdminUsersService',
       );
       return failureResponse(500, 'Failed to update user', false);
+    }
+  }
+
+  async updateUserProfile(
+    userId: string,
+    dto: UpdateUserProfileDto,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log(
+      colors.green(`Updating profile for user ${userId} (admin)...`),
+      'AdminUsersService',
+    );
+
+    try {
+      const existing = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!existing) {
+        return failureResponse(404, 'User not found', false);
+      }
+
+      const profile = await this.prisma.userProfile.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+      });
+
+      await this.prisma.$transaction(async (tx) => {
+        await applyProfileUpdates(tx, userId, profile.id, dto);
+      });
+
+      return this.getProfile(userId);
+    } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      this.logger.error(
+        'Error updating user profile',
+        this.getErrorTrace(error),
+        'AdminUsersService',
+      );
+      return failureResponse(500, 'Failed to update user profile', false);
+    }
+  }
+
+  private validateProfileImageFile(file: Express.Multer.File | undefined) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Image file is required');
+    }
+
+    const mimetype = (file.mimetype || '').toLowerCase();
+    if (!ALLOWED_PROFILE_IMAGE_MIMES.has(mimetype)) {
+      throw new BadRequestException(
+        'Invalid file type. Allowed: JPEG, PNG, WebP',
+      );
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_BYTES) {
+      throw new BadRequestException('File is too large. Maximum size is 5MB');
+    }
+
+    return { buffer: file.buffer, mimetype };
+  }
+
+  private async deleteStoredImage(key: string | null | undefined) {
+    if (!key) return;
+
+    try {
+      await this.storageService.deleteImage(key);
+    } catch {
+      this.logger.warn(
+        colors.yellow(`Could not delete stored image: ${key}`),
+        'AdminUsersService',
+      );
+    }
+  }
+
+  async uploadProfileImage(
+    userId: string,
+    dto: UploadUserProfileImageDto,
+    file: Express.Multer.File | undefined,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log(
+      colors.green(
+        `Uploading ${dto.imageType} for user ${userId} (admin)...`,
+      ),
+      'AdminUsersService',
+    );
+
+    try {
+      const uploadFile = this.validateProfileImageFile(file);
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, displayPictureKey: true },
+      });
+
+      if (!user) {
+        return failureResponse(404, 'User not found', false);
+      }
+
+      const profile = await this.prisma.userProfile.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+      });
+
+      switch (dto.imageType) {
+        case AdminProfileImageType.DISPLAY_PICTURE: {
+          const stored = await this.storageService.uploadImage(
+            uploadFile,
+            'users/avatars',
+          );
+
+          await this.deleteStoredImage(user.displayPictureKey);
+
+          await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+              displayPictureUrl: stored.url,
+              displayPictureKey: stored.key,
+            },
+          });
+          break;
+        }
+        case AdminProfileImageType.NIN_IMAGE: {
+          const stored = await this.storageService.uploadImage(
+            uploadFile,
+            'users/nin-images',
+          );
+
+          await this.deleteStoredImage(profile.ninImageKey);
+
+          await this.prisma.userProfile.update({
+            where: { id: profile.id },
+            data: {
+              ninImageUrl: stored.url,
+              ninImageKey: stored.key,
+            },
+          });
+          break;
+        }
+        case AdminProfileImageType.NYSC_CERTIFICATE: {
+          const stored = await this.storageService.uploadImage(
+            uploadFile,
+            'users/nysc-certificates',
+          );
+
+          await this.deleteStoredImage(profile.nyscCertificateKey);
+
+          await this.prisma.userProfile.update({
+            where: { id: profile.id },
+            data: {
+              nyscCertificateUrl: stored.url,
+              nyscCertificateKey: stored.key,
+            },
+          });
+          break;
+        }
+        case AdminProfileImageType.ADDRESS_PROOF: {
+          if (!dto.addressId?.trim()) {
+            throw new BadRequestException(
+              'addressId is required for address-proof uploads',
+            );
+          }
+
+          const address = await this.prisma.userAddress.findFirst({
+            where: { id: dto.addressId, userProfileId: profile.id },
+          });
+
+          if (!address) {
+            throw new NotFoundException('Address not found');
+          }
+
+          const stored = await this.storageService.uploadImage(
+            uploadFile,
+            'users/address-proofs',
+          );
+
+          await this.deleteStoredImage(address.addressProofKey);
+
+          await this.prisma.userAddress.update({
+            where: { id: dto.addressId },
+            data: {
+              addressProofUrl: stored.url,
+              addressProofKey: stored.key,
+            },
+          });
+          break;
+        }
+        default:
+          throw new BadRequestException('Unsupported image type');
+      }
+
+      return this.getProfile(userId);
+    } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      this.logger.error(
+        'Error uploading profile image',
+        this.getErrorTrace(error),
+        'AdminUsersService',
+      );
+      return failureResponse(500, 'Failed to upload profile image', false);
+    }
+  }
+
+  async removeProfileDocument(
+    userId: string,
+    imageType: AdminProfileImageType.NIN_IMAGE | AdminProfileImageType.NYSC_CERTIFICATE,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log(
+      colors.green(`Removing ${imageType} for user ${userId} (admin)...`),
+      'AdminUsersService',
+    );
+
+    try {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return failureResponse(404, 'User not found', false);
+      }
+
+      const profile = await this.prisma.userProfile.upsert({
+        where: { userId },
+        update: {},
+        create: { userId },
+      });
+
+      if (imageType === AdminProfileImageType.NIN_IMAGE) {
+        await this.deleteStoredImage(profile.ninImageKey);
+        await this.prisma.userProfile.update({
+          where: { id: profile.id },
+          data: { ninImageUrl: null, ninImageKey: null },
+        });
+      } else {
+        await this.deleteStoredImage(profile.nyscCertificateKey);
+        await this.prisma.userProfile.update({
+          where: { id: profile.id },
+          data: { nyscCertificateUrl: null, nyscCertificateKey: null },
+        });
+      }
+
+      return this.getProfile(userId);
+    } catch (error: unknown) {
+      this.logger.error(
+        'Error removing profile document',
+        this.getErrorTrace(error),
+        'AdminUsersService',
+      );
+      return failureResponse(500, 'Failed to remove profile document', false);
     }
   }
 

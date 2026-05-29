@@ -24,6 +24,10 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../identity/guards/jwt-auth.guard';
 import type { UserProfileData } from './types/user-profile.types';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
+import {
+  UploadProfileDocumentDto,
+  UserProfileDocumentType,
+} from './dto/upload-profile-document.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -104,5 +108,33 @@ export class UsersController {
     @UploadedFile() file: Express.Multer.File,
   ): Promise<ApiResponse<UserProfileData>> {
     return this.usersService.updateAddressProof(req.user, addressId, file);
+  }
+
+  @Put('profile/images')
+  @ApiOperation({
+    summary:
+      'Upload NIN image or NYSC certificate (one-time only; cannot replace after upload)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['imageType', 'file'],
+      properties: {
+        imageType: {
+          type: 'string',
+          enum: ['nin-image', 'nysc-certificate'],
+        },
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  uploadProfileDocument(
+    @Req() req: AuthenticatedRequest,
+    @Body() dto: UploadProfileDocumentDto,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<ApiResponse<UserProfileData>> {
+    return this.usersService.uploadProfileDocument(req.user, dto, file);
   }
 }

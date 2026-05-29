@@ -88,6 +88,8 @@ export interface UserProfileData {
   isActive: boolean;
   department: UserProfileDepartment | null;
   displayPictureUrl: string | null;
+  ninImageUrl: string | null;
+  nyscCertificateUrl: string | null;
   staffId: string | null;
   createdAt: string;
   updatedAt: string;

@@ -15,6 +15,10 @@ import type { JwtAuthUser } from '../identity/types/jwt-auth-user.interface';
 import type { UserProfileData } from './types/user-profile.types';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import {
+  UserProfileDocumentType,
+  UploadProfileDocumentDto,
+} from './dto/upload-profile-document.dto';
+import {
   formatUserProfile,
   USER_PROFILE_INCLUDE,
 } from './helpers/profile-formatter';
@@ -277,6 +281,88 @@ export class UsersService {
         throw error;
       }
       return failureResponse(500, 'Error updating address proof', false);
+    }
+  }
+
+  async uploadProfileDocument(
+    authUser: JwtAuthUser | undefined,
+    dto: UploadProfileDocumentDto,
+    file: Express.Multer.File | undefined,
+  ): Promise<ApiResponse<UserProfileData>> {
+    this.logger.log('Uploading profile document...', 'UsersService');
+
+    const userId = this.resolveUserId(authUser);
+
+    if (!userId) {
+      return failureResponse(401, 'Unauthorized', false);
+    }
+
+    if (!file?.buffer) {
+      throw new BadRequestException('Document file is required');
+    }
+
+    const mimetype = (file.mimetype || '').toLowerCase();
+    if (!ALLOWED_DISPLAY_PICTURE_MIMES.has(mimetype)) {
+      throw new BadRequestException('Invalid file type. Allowed: JPEG, PNG');
+    }
+
+    if (file.size > MAX_DISPLAY_PICTURE_BYTES) {
+      throw new BadRequestException('File is too large. Maximum size is 5MB');
+    }
+
+    try {
+      const profile = await this.ensureUserProfile(userId);
+
+      const uploadFile = { buffer: file.buffer, mimetype };
+
+      if (dto.imageType === UserProfileDocumentType.NIN_IMAGE) {
+        if (profile.ninImageUrl) {
+          throw new BadRequestException(
+            'NIN image is already uploaded and cannot be changed. Contact an admin if you need it removed.',
+          );
+        }
+
+        const stored = await this.storageService.uploadImage(
+          uploadFile,
+          'users/nin-images',
+        );
+
+        await this.prisma.userProfile.update({
+          where: { id: profile.id },
+          data: {
+            ninImageUrl: stored.url,
+            ninImageKey: stored.key,
+          },
+        });
+      } else if (dto.imageType === UserProfileDocumentType.NYSC_CERTIFICATE) {
+        if (profile.nyscCertificateUrl) {
+          throw new BadRequestException(
+            'NYSC certificate is already uploaded and cannot be changed. Contact an admin if you need it removed.',
+          );
+        }
+
+        const stored = await this.storageService.uploadImage(
+          uploadFile,
+          'users/nysc-certificates',
+        );
+
+        await this.prisma.userProfile.update({
+          where: { id: profile.id },
+          data: {
+            nyscCertificateUrl: stored.url,
+            nyscCertificateKey: stored.key,
+          },
+        });
+      } else {
+        throw new BadRequestException('Unsupported document type');
+      }
+
+      return this.fetchProfileResponse(userId, 'Document uploaded successfully');
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      return failureResponse(500, 'Error uploading document', false);
     }
   }
 

@@ -211,6 +211,8 @@ export function formatUserProfile(user: ProfileRecord): UserProfileData {
     isActive: user.isActive,
     department,
     displayPictureUrl: user.displayPictureUrl,
+    ninImageUrl: user.profile?.ninImageUrl ?? null,
+    nyscCertificateUrl: user.profile?.nyscCertificateUrl ?? null,
     staffId: user.profile?.staffId ?? null,
     createdAt: formatDate(user.createdAt),
     updatedAt: formatDate(user.updatedAt),

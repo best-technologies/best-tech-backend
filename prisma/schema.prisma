@@ -64,6 +64,10 @@ model UserProfile {
   hobbies                String[] @default([])
   supportNeeded          String?
   staffId                String?  @unique
+  ninImageUrl            String?
+  ninImageKey            String?
+  nyscCertificateUrl     String?
+  nyscCertificateKey     String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
