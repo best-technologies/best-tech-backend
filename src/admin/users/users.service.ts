@@ -18,11 +18,13 @@ import type {
   UsersDashboardPayload,
   UsersAnalytics,
   UserDepartmentCount,
+  ProfileCompletionAnalytics,
 } from './types/user.types';
 import {
   formatUserProfile,
   USER_PROFILE_INCLUDE,
 } from '../../users/helpers/profile-formatter';
+import { calculateProfileCompletion } from '../../users/helpers/profile-completion.helper';
 import type { UserProfileData } from '../../users/types/user-profile.types';
 import * as colors from 'colors';
 
@@ -78,6 +80,17 @@ export class AdminUsersService {
     };
   }
 
+  private formatDashboardUser(
+    user: Prisma.UserGetPayload<{ include: typeof USER_PROFILE_INCLUDE }>,
+  ): UserData {
+    const { overallPercent } = calculateProfileCompletion(user);
+
+    return {
+      ...this.formatUser(user),
+      profileCompletionPercent: overallPercent,
+    };
+  }
+
   private getUserInclude() {
     return {
       department: { select: { id: true, name: true } },
@@ -126,6 +139,41 @@ export class AdminUsersService {
     };
   }
 
+  private async buildProfileCompletionStats(
+    where: Prisma.UserWhereInput,
+  ): Promise<ProfileCompletionAnalytics> {
+    const users = await this.prisma.user.findMany({
+      where,
+      include: USER_PROFILE_INCLUDE,
+    });
+
+    let complete = 0;
+    let inProgress = 0;
+    let notStarted = 0;
+    let totalPercent = 0;
+
+    for (const user of users) {
+      const { overallPercent } = calculateProfileCompletion(user);
+      totalPercent += overallPercent;
+
+      if (overallPercent === 100) {
+        complete += 1;
+      } else if (overallPercent === 0) {
+        notStarted += 1;
+      } else {
+        inProgress += 1;
+      }
+    }
+
+    return {
+      complete,
+      inProgress,
+      notStarted,
+      averagePercent:
+        users.length === 0 ? 0 : Math.round(totalPercent / users.length),
+    };
+  }
+
   private async buildAnalytics(
     where: Prisma.UserWhereInput,
   ): Promise<UsersAnalytics> {
@@ -136,6 +184,7 @@ export class AdminUsersService {
       roleGroups,
       userTypeGroups,
       deptGroups,
+      profileCompletion,
     ] = await Promise.all([
       this.prisma.user.count({ where }),
       this.prisma.user.count({ where: { ...where, isActive: true } }),
@@ -155,6 +204,7 @@ export class AdminUsersService {
         where: { ...where, departmentId: { not: null } },
         _count: { id: true },
       }),
+      this.buildProfileCompletionStats(where),
     ]);
 
     const byRole = { admin: 0, staff: 0, user: 0 };
@@ -204,6 +254,7 @@ export class AdminUsersService {
       byRole,
       byUserType,
       topDepartments,
+      profileCompletion,
     };
   }
 
@@ -241,7 +292,7 @@ export class AdminUsersService {
           skip,
           take: limit,
           orderBy,
-          include: this.getUserInclude(),
+          include: USER_PROFILE_INCLUDE,
         }),
         this.buildAnalytics(where),
       ]);
@@ -250,7 +301,7 @@ export class AdminUsersService {
 
       const payload: UsersDashboardPayload = {
         analytics,
-        users: users.map((u) => this.formatUser(u)),
+        users: users.map((u) => this.formatDashboardUser(u)),
         pagination: {
           page,
           limit,

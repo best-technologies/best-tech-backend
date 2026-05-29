@@ -67,6 +67,16 @@ export class AdminUsersController {
     return result;
   }
 
+  @Get(':id/profile')
+  async getUserProfileById(
+    @Param('id') id: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.adminUsersService.getProfile(id);
+    res.status(result.statusCode);
+    return result;
+  }
+
   @Get(':id')
   async findOne(
     @Param('id') id: string,

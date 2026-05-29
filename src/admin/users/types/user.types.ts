@@ -17,6 +17,7 @@ export interface UserData {
   displayPictureUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  profileCompletionPercent?: number;
 }
 
 export interface UserRoleCounts {
@@ -38,6 +39,14 @@ export interface UsersAnalytics {
   byRole: UserRoleCounts;
   byUserType: Record<UserType, number>;
   topDepartments: UserDepartmentCount[];
+  profileCompletion: ProfileCompletionAnalytics;
+}
+
+export interface ProfileCompletionAnalytics {
+  complete: number;
+  inProgress: number;
+  notStarted: number;
+  averagePercent: number;
 }
 
 export interface UsersPagination {
